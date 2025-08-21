@@ -9,7 +9,7 @@ from ..tasks import SENT
 ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     name="estonian-valence",
     pretty_name="the Estonian valence corpus reorganized for EuroEval",
-    huggingface_id="EuroEval/estonian-valence-corpus-euroeval",
+    huggingface_id="EuroEval/estonian-valence",
     task=SENT,
     languages=[ET],
 )
