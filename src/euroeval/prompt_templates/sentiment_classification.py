@@ -50,7 +50,7 @@ SENT_TEMPLATES = {
         ),
         default_prompt_prefix="Järgmised on dokumendid ja nende meelestatus, "
         "mis võib olla {labels_str}.",
-        default_prompt_template="Dokument: {text}\Meelestatus: {label}",
+        default_prompt_template="Dokument: {text}\nMeelestatus: {label}",
         default_instruction_prompt="Dokument: {text}\n\nKlassifitseeri dokument "
         "meelestatuse järgi. Võimalikud vastused: {labels_str}. Muud vastused "
         "ei ole lubatud.",
