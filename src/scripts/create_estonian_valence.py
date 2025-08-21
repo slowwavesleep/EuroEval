@@ -12,7 +12,6 @@ from huggingface_hub import HfApi
 from requests.exceptions import HTTPError
 
 
-
 def main() -> None:
     """Create the Estonian valence dataset and upload to HF Hub."""
     target_repo_id = "EuroEval/estonian-valence"
