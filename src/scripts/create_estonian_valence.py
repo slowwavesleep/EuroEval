@@ -9,7 +9,7 @@
 
 from datasets import load_dataset, DatasetDict, concatenate_datasets
 from huggingface_hub import HfApi
-from requests.exceptions import HTTPError
+from requests import HTTPError
 
 
 def main() -> None:
@@ -27,6 +27,7 @@ def main() -> None:
     ds = ds.filter(
         lambda rows: [el != "vastuoluline" for el in rows["label"]], batched=True
     )
+
     # Convert the labels to English labels
     label_mapping = {
         "negatiivne": "negative",
@@ -68,7 +69,7 @@ def main() -> None:
         if cur_labels != expected_labels:
             raise ValueError(f"Incorrect labels for {key}: {cur_labels}")
 
-    # Remove the dataset from Hugging Face Hub if it already exists
+    # remove the dataset from Hugging Face Hub if it already exists
     try:
         api = HfApi()
         api.delete_repo(target_repo_id, repo_type="dataset")
