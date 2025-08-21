@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated `vllm` dependency to `>=0.10.1`, which includes GPT-OSS support.
 - Updated `numpy` dependency to `>=2.0.0`, as the previous clash is not applicable
   anymore.
+- Added the Estonian Valence Corpus [dataset](https://huggingface.co/datasets/kardosdrur/estonian-valence). 
+  The split is given by 1,024 / 256 / 1,945 samples for train / val / test, respectively.
+  It is marked as `unofficial` for now.
 
 ### Fixed
 - Now disables the `seed` parameter if the API inference model does not support it,
