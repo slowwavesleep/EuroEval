@@ -9,7 +9,7 @@ information about what these constitute.
 
 ### Estonian Valence Corpus
 
-This dataset was published in [this paper](https://www.researchgate.net/profile/Hille-Pajupuu/publication/303837298_Identifying_Polarity_in_Different_Text_Types/links/575711e308ae05c1ec16ce05/Identifying-Polarity-in-Different-Text-Types.pdf). The dataset was compiled of articles of different rubrics of online
+This dataset was published in [this paper](http://dx.doi.org/10.7592/FEJF2016.64.polarity). The dataset was compiled of articles of different rubrics of online
 dailies, weeklies, and reader comments, while the polarity of each paragraph was determined by native Estonian readers.
 
 There are 4 labels in the original dataset instead of the usual 3.
