@@ -55,6 +55,12 @@ def main() -> None:
         cur_labels = set(new_ds[key].unique("label"))
         if cur_labels != expected_labels:
             raise ValueError(f"Incorrect labels for {key}: {cur_labels}")
+    # Remove the dataset from Hugging Face Hub if it already exists
+    try:
+        api = HfApi()
+        api.delete_repo(target_repo_id, repo_type="dataset")
+    except HTTPError:
+        pass
 
     new_ds.push_to_hub(target_repo_id, private=True)
 
