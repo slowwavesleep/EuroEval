@@ -12,7 +12,6 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     huggingface_id="EuroEval/estonian-valence-corpus-euroeval",
     task=SENT,
     languages=[ET],
-    unofficial=True,
 )
 
 
