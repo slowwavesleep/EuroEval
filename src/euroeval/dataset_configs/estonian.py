@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import ET
 from ..tasks import SENT
 
-### Unofficial datasets ###
+### Official datasets ###
 
 ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     name="estonian-valence",
