@@ -13,5 +13,3 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     task=SENT,
     languages=[ET],
 )
-
-
