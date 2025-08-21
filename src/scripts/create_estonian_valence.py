@@ -8,6 +8,9 @@
 """Create the Estonian valence dataset and upload to HF Hub."""
 
 from datasets import load_dataset, DatasetDict, concatenate_datasets
+from huggingface_hub import HfApi
+from requests.exceptions import HTTPError
+
 
 
 def main() -> None:
