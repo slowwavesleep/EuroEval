@@ -23,7 +23,7 @@ def main() -> None:
 
     # remove examples with the fourth label for consistency with the other sentiment datasets
     ds = ds.filter(
-        lambda rows: [el for el in rows["label"] if el != "vastuoluline"], batched=True
+        lambda rows: [el != "vastuoluline" for el in rows["label"]], batched=True
     )
 
     # target split sizes
