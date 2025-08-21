@@ -48,11 +48,12 @@ SENT_TEMPLATES = {
         default_prompt_label_mapping=dict(
             positive="positiivne", neutral="neutraalne", negative="negatiivne"
         ),
-        default_prompt_prefix="Järgmised on dokumendid ja nende tundmus, mis võib "
-        "olla {labels_str}.",
-        default_prompt_template="Dokument: {text}\nTundmus: {label}",
-        default_instruction_prompt="Dokument: {text}\n\nKlassifitseeri dokumendi "
-        "tundmust. Võimalikud vastused: {labels_str}. Muud vastused ei ole lubatud.",
+        default_prompt_prefix="Järgmised on dokumendid ja nende meelestatus, "
+        "mis võib olla {labels_str}.",
+        default_prompt_template="Dokument: {text}\Meelestatus: {label}",
+        default_instruction_prompt="Dokument: {text}\n\nKlassifitseeri dokument "
+        "meelestatuse järgi. Võimalikud vastused: {labels_str}. Muud vastused "
+        "ei ole lubatud.",
     ),
     PT: PromptConfig(
         default_prompt_label_mapping=dict(

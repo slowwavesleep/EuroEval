@@ -49,18 +49,18 @@ When evaluating generative models, we use the following setup (see the
 - Number of few-shot examples: 12
 - Prefix prompt:
   ```
-  Järgmised on dokumendid ja nende tundmus, mis võib olla 'positiivne', 'neutraalne' või 'negatiivne'.
+  Järgmised on dokumendid ja nende meelestatus, mis võib olla 'positiivne', 'neutraalne' või 'negatiivne'.
   ```
 - Base prompt template:
   ```
   Dokument: {text}
-  Tundmus: {label}
+  Meelestatus: {label}
   ```
 - Instruction-tuned prompt template:
   ```
   Dokument: {text}
 
-  Klassifitseeri dokumendi tundmust. Võimalikud vastused: 'positiivne', 'neutraalne' või 'negatiivne'. Muud vastused ei ole lubatud.
+  Klassifitseeri dokument meelestatuse järgi. Võimalikud vastused: 'positiivne', 'neutraalne' või 'negatiivne'. Muud vastused ei ole lubatud.
   ```
 - Label mapping:
     - `positive` ➡️ `positiivne`
