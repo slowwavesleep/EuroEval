@@ -50,7 +50,7 @@ def main() -> None:
     new_ds = DatasetDict({"train": new_train, "val": new_val, "test": new_test})
 
     # sanity check the labels
-    expected_labels = {"negatiivne", "neutraalne", "positiivne"}
+    expected_labels = {"negative", "neutral", "positive"}
     for key in new_ds:
         cur_labels = set(new_ds[key].unique("label"))
         if cur_labels != expected_labels:
