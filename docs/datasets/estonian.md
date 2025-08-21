@@ -19,7 +19,7 @@ mainly to be consistent with rest of the languages in EuroEval.
 The original full dataset consists of 3,277 / 818 samples for the training and test splits,
 respectively. Having filtered out 'mixed' examples, we truncate the train split to 1,024
 examples, and redistribute the rest to validation and test resulting in the final size of
-1,024 / 256 / 1,945 for the training, validation and test splits, respectively.
+1,024 / 256 / 2,048 for the training, validation and test splits, respectively.
 
 
 Here are a few examples from the training split:
