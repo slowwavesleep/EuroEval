@@ -8,7 +8,7 @@ from ..tasks import SENT
 
 ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     name="estonian-valence",
-    pretty_name="the Estonian valence corpus reorganized for EuroEval",
+    pretty_name="the Estonian sentiment classification dataset Estonian Valence",
     huggingface_id="EuroEval/estonian-valence",
     task=SENT,
     languages=[ET],
