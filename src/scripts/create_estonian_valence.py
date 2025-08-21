@@ -47,7 +47,7 @@ def main() -> None:
         ]
     )
 
-    new_ds = DatasetDict({"train": new_train, "validation": new_val, "test": new_test})
+    new_ds = DatasetDict({"train": new_train, "val": new_val, "test": new_test})
 
     # sanity check the labels
     expected_labels = {"negatiivne", "neutraalne", "positiivne"}
