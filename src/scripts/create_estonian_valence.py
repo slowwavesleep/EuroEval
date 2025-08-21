@@ -25,6 +25,16 @@ def main() -> None:
     ds = ds.filter(
         lambda rows: [el != "vastuoluline" for el in rows["label"]], batched=True
     )
+    # Convert the labels to English labels
+    label_mapping = {
+        "negatiivne": "negative",
+        "neutraalne": "neutral",
+        "positiivne": "positive",
+    }
+    ds = ds.map(
+        lambda rows: {"label": [label_mapping[el] for el in rows["label"]]},
+        batched=True,
+    )
 
     # target split sizes
     train_size = 1024
