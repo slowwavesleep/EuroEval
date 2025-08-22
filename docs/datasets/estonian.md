@@ -72,3 +72,15 @@ You can evaluate this dataset directly as follows:
 ```bash
 $ euroeval --model <model-id> --dataset estonian-valence
 ```
+
+## Common-sense Reasoning
+
+### WinoGrande-ET
+
+The dataset includes the WinoGrande test set translated and culturally adapted by hand by a professional translator (citation TBA).
+The structure of the dataset is identical to the original. Since train and dev splits were not translated manually, we employ
+the GPT4o model to translate the expected number of examples starting from the beginning of the respective splits.
+The final dataset size is 1,024 / 256 / 1,767 for the training, validation and test splits, respectively.
+
+
+Here are a few examples from the training split:
