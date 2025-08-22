@@ -8,6 +8,7 @@
 # ///
 
 """Create the Estonian valence dataset and upload to HF Hub."""
+from typing import MutableMapping
 
 from datasets import load_dataset, DatasetDict, concatenate_datasets
 from huggingface_hub import HfApi
@@ -39,6 +40,10 @@ def main() -> None:
     # please don't share the answers explicitly though
     ds["test"] = ds["test"].map(lambda row: {"answer": row["qID"][-1]})
 
+    ds = ds.map(add_options_and_label)
+
+    ds = ds.select_columns(["text", "label"])
+
     try:
         api = HfApi()
         api.delete_repo(target_repo_id, repo_type="dataset")
@@ -46,6 +51,27 @@ def main() -> None:
         pass
 
     ds.push_to_hub(target_repo_id, private=True)
+
+
+def add_options_and_label(row: MutableMapping) -> MutableMapping:
+    letter_mapping = {"1": "A", "2": "B"}
+    
+    original_text = row["sentence"]
+    option_1 = row["option1"]
+    option_2 = row["option2"]
+
+    new_text = (
+        f"{original_text}\n\n"
+        f"A. {option_1}\n"
+        f"B. {option_2}\n"
+    )
+
+    label = letter_mapping[row["answer"]]
+
+    return {
+        "text": new_text,
+        "label": label
+    }
 
 
 if __name__ == "__main__":
