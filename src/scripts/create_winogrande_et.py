@@ -7,7 +7,7 @@
 # ]
 # ///
 
-"""Create the Estonian valence dataset and upload to HF Hub."""
+"""Create the Estonian Winogrande dataset and upload to HF Hub."""
 from typing import MutableMapping
 
 from datasets import load_dataset, DatasetDict, concatenate_datasets
@@ -16,7 +16,7 @@ from requests import HTTPError
 
 
 def main() -> None:
-    """Create the Estonian valence dataset and upload to HF Hub."""
+    """Create the Estonian Winogrande dataset and upload to HF Hub."""
     target_repo_id = "EuroEval/winogrande_et"
 
     # start from the official source
@@ -40,8 +40,10 @@ def main() -> None:
     # please don't share the answers explicitly though
     ds["test"] = ds["test"].map(lambda row: {"answer": row["qID"][-1]})
 
+    # add options to the text and transform labels to letters
     ds = ds.map(add_options_and_label)
 
+    # retain only used columns
     ds = ds.select_columns(["text", "label"])
 
     try:
