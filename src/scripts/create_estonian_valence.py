@@ -30,7 +30,7 @@ def main() -> None:
         lambda rows: [el != "vastuoluline" for el in rows["label"]], batched=True
     )
 
-    # Convert the labels to English labels
+    # convert the labels to English labels
     label_mapping = {
         "negatiivne": "negative",
         "neutraalne": "neutral",
