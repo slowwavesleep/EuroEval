@@ -2,7 +2,7 @@
 
 from ..data_models import DatasetConfig
 from ..languages import ET
-from ..tasks import SENT
+from ..tasks import SENT, COMMON_SENSE
 
 ### Official datasets ###
 
@@ -12,4 +12,21 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     huggingface_id="EuroEval/estonian-valence",
     task=SENT,
     languages=[ET],
+)
+
+WINOGRANDE_ET_CONFIG = DatasetConfig(
+    name="winogrande_et",
+    pretty_name="the Estonian Winogrande dataset",
+    huggingface_id="EuroEval/winogrande_et",
+    task=COMMON_SENSE,
+    languages=[ET],
+    # requires custom templates as WinoGrande is different from
+    # the usual multiple choice tasks
+    _prompt_prefix="Sulle esitatakse lüngaga (_) tekstülesanne "
+    "ja kaks vastusevarianti (A ja B).\n",
+    # includes the question and the options
+    _prompt_template="Tekstülesanne: {text}\nVastus: {label}",
+    _instruction_prompt="Tekstülesanne: {text}\n\n"
+    "Sinu ülesanne on valida lünka sobiv vastusevariant. "
+    "Vasta ainult {labels_str}. Muud vastused ei ole lubatud.",
 )
