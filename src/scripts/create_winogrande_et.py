@@ -68,7 +68,9 @@ def add_options_and_label(row: MutableMapping) -> MutableMapping:
 
     answer = row["answer"]
     if answer not in letter_mapping.keys():
-        raise ValueError(f"Invalid answer: {answer}, possible values are {letter_mapping.keys()}")
+        raise ValueError(
+            f"Invalid answer: {answer}, possible values are {letter_mapping.keys()}"
+        )
     label = letter_mapping[answer]
 
     return {"text": new_text, "label": label}

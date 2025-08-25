@@ -85,13 +85,21 @@ The final dataset size is 1,024 / 256 / 1,767 for the training, validation and t
 Here are a few examples from the training split (note that unlike the test split these are machine translated):
 
 ```json
-{"text": "Ian vabatahtlikult sõi Dennise menudo pärast seda, kui oli juba kausi söönud, sest _ põlgas soolte söömist.\n\na. Ian\nb. Dennis", "label": "b"}
+{
+  "text": "Ian vabatahtlikult sõi Dennise menudo pärast seda, kui oli juba kausi söönud, sest _ põlgas soolte söömist.\nVastusevariandid:\na. Ian\nb. Dennis",
+  "label": "b"
+}
 ```
 ```json
-{"text": "Ian vabatahtlikult sõi Dennise menudo pärast seda, kui oli juba kausitäie söönud, sest _ nautis soolte söömist.\n\na. Ian\nb. Dennis", "label": "a"}
+{
+  "text": "Ian vabatahtlikult sõi Dennise menudo pärast seda, kui oli juba kausitäie söönud, sest _ nautis soolte söömist.\nVastusevariandid:\na. Ian\nb. Dennis", "label": "a"
+}
 ```
 ```json
-{"text": "Ta ei tule kunagi minu koju, aga mina lähen alati tema majja, sest _ on väiksem.\n\na. kodu\nb. maja", "label": "a"}
+{
+  "text": "Ta ei tule kunagi minu koju, aga mina lähen alati tema majja, sest _ on väiksem.\nVastusevariandid:\na. kodu\nb. maja",
+  "label": "a"
+}
 ```
 
 When evaluating generative models, we use the following setup (see the
