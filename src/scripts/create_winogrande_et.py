@@ -53,7 +53,7 @@ def main() -> None:
         api.delete_repo(target_repo_id, repo_type="dataset")
     except HTTPError:
         pass
-    print(ds["train"][0])
+
     ds.push_to_hub(target_repo_id, private=True)
 
 
