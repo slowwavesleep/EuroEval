@@ -33,7 +33,9 @@ def main() -> None:
         {
             "train": mt_ds["train"].select(range(train_size)),
             "validation": mt_ds["dev"].select(range(val_size)),
-            "test": human_ds["test"].select(range(min(test_size, len(human_ds["test"])))),
+            "test": human_ds["test"].select(
+                range(min(test_size, len(human_ds["test"])))
+            ),
         }
     )
 
@@ -51,29 +53,25 @@ def main() -> None:
         api.delete_repo(target_repo_id, repo_type="dataset")
     except HTTPError:
         pass
-
+    print(ds["train"][0])
     ds.push_to_hub(target_repo_id, private=True)
 
 
 def add_options_and_label(row: MutableMapping) -> MutableMapping:
-    letter_mapping = {"1": "A", "2": "B"}
-    
+    letter_mapping = {"1": "a", "2": "b"}
+
     original_text = row["sentence"]
     option_1 = row["option1"]
     option_2 = row["option2"]
 
-    new_text = (
-        f"{original_text}\n\n"
-        f"A. {option_1}\n"
-        f"B. {option_2}\n"
-    )
+    new_text = f"{original_text}\n\na. {option_1}\nb. {option_2}"
 
-    label = letter_mapping[row["answer"]]
+    answer = row["answer"]
+    if answer not in letter_mapping.keys():
+        raise ValueError(f"Invalid answer: {answer}, possible values are {letter_mapping.keys()}")
+    label = letter_mapping[answer]
 
-    return {
-        "text": new_text,
-        "label": label
-    }
+    return {"text": new_text, "label": label}
 
 
 if __name__ == "__main__":

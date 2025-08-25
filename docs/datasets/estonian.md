@@ -83,4 +83,41 @@ the GPT4o model to translate the expected number of examples starting from the b
 The final dataset size is 1,024 / 256 / 1,767 for the training, validation and test splits, respectively.
 
 
-Here are a few examples from the training split:
+Here are a few examples from the training split (note that unlike the test split these are machine translated):
+
+```json
+{"text": "Ian vabatahtlikult sõi Dennise menudo pärast seda, kui oli juba kausi söönud, sest _ põlgas soolte söömist.\n\na. Ian\nb. Dennis", "label": "b"}
+```
+```json
+{"text": "Ian vabatahtlikult sõi Dennise menudo pärast seda, kui oli juba kausitäie söönud, sest _ nautis soolte söömist.\n\na. Ian\nb. Dennis", "label": "a"}
+```
+```json
+{"text": "Ta ei tule kunagi minu koju, aga mina lähen alati tema majja, sest _ on väiksem.\n\na. kodu\nb. maja", "label": "a"}
+```
+
+When evaluating generative models, we use the following setup (see the
+[methodology](/methodology) for more information on how these are used):
+
+- Number of few-shot examples: 5
+- Prefix prompt:
+  ```
+  Sulle esitatakse lüngaga (_) tekstülesanne ja kaks vastusevarianti (a ja b).
+  ```
+- Base prompt template:
+  ```
+  Tekstülesanne: {text}
+  Vastus: {label}
+  ```
+- Instruction-tuned prompt template:
+  ```
+  Tekstülesanne: {text}
+
+
+  Sinu ülesanne on valida lünka sobiv vastusevariant. Vasta ainult {labels_str}. Muud vastused ei ole lubatud.
+  ```
+
+You can evaluate this dataset directly as follows:
+
+```bash
+$ euroeval --model <model-id> --dataset winogrande_et
+```

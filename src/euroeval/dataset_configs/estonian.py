@@ -23,9 +23,9 @@ WINOGRANDE_ET_CONFIG = DatasetConfig(
     # requires custom templates as WinoGrande is different from
     # the usual multiple choice tasks
     _prompt_prefix="Sulle esitatakse lüngaga (_) tekstülesanne "
-    "ja kaks vastusevarianti (A ja B).\n",
+    "ja kaks vastusevarianti (a ja b).\n",
     # includes the question and the options
-    _prompt_template="Tekstülesanne: {text}\nVastus: {label}",
+    _prompt_template="Tekstülesanne: {text}\n\nVastus: {label}",
     _instruction_prompt="Tekstülesanne: {text}\n\n"
     "Sinu ülesanne on valida lünka sobiv vastusevariant. "
     "Vasta ainult {labels_str}. Muud vastused ei ole lubatud.",
