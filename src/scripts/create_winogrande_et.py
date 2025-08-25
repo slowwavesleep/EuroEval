@@ -64,7 +64,7 @@ def add_options_and_label(row: MutableMapping) -> MutableMapping:
     option_1 = row["option1"]
     option_2 = row["option2"]
 
-    new_text = f"{original_text}\n\na. {option_1}\nb. {option_2}"
+    new_text = f"{original_text}\n\nVastusevariandid:\na. {option_1}\nb. {option_2}"
 
     answer = row["answer"]
     if answer not in letter_mapping.keys():
