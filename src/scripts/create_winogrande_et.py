@@ -10,7 +10,7 @@
 """Create the Estonian Winogrande dataset and upload to HF Hub."""
 from typing import MutableMapping
 
-from datasets import load_dataset, DatasetDict, concatenate_datasets
+from datasets import load_dataset, DatasetDict
 from huggingface_hub import HfApi
 from requests import HTTPError
 
