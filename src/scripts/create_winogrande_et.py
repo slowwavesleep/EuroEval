@@ -32,7 +32,7 @@ def main() -> None:
     ds = DatasetDict(
         {
             "train": mt_ds["train"].select(range(train_size)),
-            "validation": mt_ds["dev"].select(range(val_size)),
+            "validation": mt_ds["val"].select(range(val_size)),
             "test": human_ds["test"].select(
                 range(min(test_size, len(human_ds["test"])))
             ),
