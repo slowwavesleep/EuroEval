@@ -17,7 +17,7 @@ from requests import HTTPError
 
 def main() -> None:
     """Create the Estonian Winogrande dataset and upload to HF Hub."""
-    target_repo_id = "EuroEval/winogrande_et"
+    target_repo_id = "EuroEval/winogrande-et"
 
     # start from the official source
     human_ds = load_dataset("tartuNLP/winogrande_et", "human_translated")
