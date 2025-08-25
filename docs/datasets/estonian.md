@@ -82,7 +82,6 @@ The structure of the dataset is identical to the original. Since train and dev s
 the GPT-4o model to translate the expected number of examples starting from the beginning of the respective splits.
 The final dataset size is 1,024 / 256 / 1,767 for the training, validation and test splits, respectively.
 
-
 Here are a few examples from the training split (note that unlike the test split these are machine translated):
 
 ```json

@@ -29,4 +29,5 @@ WINOGRANDE_ET_CONFIG = DatasetConfig(
     _instruction_prompt="Tekstülesanne: {text}\n\n"
     "Sinu ülesanne on valida lünka sobiv vastusevariant. "
     "Vasta ainult {labels_str}. Muud vastused ei ole lubatud.",
+    _labels=["a", "b"],
 )
