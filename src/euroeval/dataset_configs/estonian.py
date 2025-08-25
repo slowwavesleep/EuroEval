@@ -17,7 +17,7 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
 WINOGRANDE_ET_CONFIG = DatasetConfig(
     name="winogrande-et",
     pretty_name="the Estonian common-sense reasoning dataset Winogrande-et",
-    huggingface_id="EuroEval/winogrande_et",
+    huggingface_id="EuroEval/winogrande-et",
     task=COMMON_SENSE,
     languages=[ET],
     # requires custom templates as WinoGrande is different from
