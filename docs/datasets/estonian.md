@@ -121,7 +121,6 @@ When evaluating generative models, we use the following setup (see the
   a. {option_a}
   b. {option_b}
 
-
   Sinu ülesanne on valida lünka sobiv vastusevariant. Vasta ainult 'a' või 'b'. Muud vastused ei ole lubatud.
   ```
 
