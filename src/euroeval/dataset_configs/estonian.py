@@ -25,7 +25,7 @@ WINOGRANDE_ET_CONFIG = DatasetConfig(
     _prompt_prefix="Sulle esitatakse lüngaga (_) tekstülesanded, "
     "igal ülesandel on kaks vastusevarianti (a ja b).",
     # includes the question and the options
-    _prompt_template="Tekstülesanne: {text}\n\nVastus: {label}",
+    _prompt_template="Tekstülesanne: {text}\nVastus: {label}",
     _instruction_prompt="Tekstülesanne: {text}\n\n"
     "Sinu ülesanne on valida lünka sobiv vastusevariant. "
     "Vasta ainult {labels_str}. Muud vastused ei ole lubatud.",

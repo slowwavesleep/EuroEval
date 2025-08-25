@@ -77,9 +77,9 @@ $ euroeval --model <model-id> --dataset estonian-valence
 
 ### WinoGrande-ET
 
-The dataset includes the WinoGrande test set translated and culturally adapted by hand by a professional translator (citation TBA).
+The dataset includes the [WinoGrande](https://doi.org/10.48550/arXiv.1907.10641) test set translated and culturally adapted by hand by a professional translator (citation TBA).
 The structure of the dataset is identical to the original. Since train and dev splits were not translated manually, we employ
-the GPT4o model to translate the expected number of examples starting from the beginning of the respective splits.
+the GPT-4o model to translate the expected number of examples starting from the beginning of the respective splits.
 The final dataset size is 1,024 / 256 / 1,767 for the training, validation and test splits, respectively.
 
 
@@ -106,17 +106,14 @@ When evaluating generative models, we use the following setup (see the
 - Base prompt template:
   ```
   Tekstülesanne: {text}
-
   Vastusevariandid:
   a. {option_a}
   b. {option_b}
-
   Vastus: {label}
   ```
 - Instruction-tuned prompt template:
   ```
   Tekstülesanne: {text}
-
   Vastusevariandid:
   a. {option_a}
   b. {option_b}
