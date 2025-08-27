@@ -10,18 +10,21 @@ repos:
       - id: trailing-whitespace
       - id: debug-statements
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.9
+    rev: v0.12.10
     hooks:
       - id: ruff
         args:
           - --fix
           - --unsafe-fixes
           - --exit-non-zero-on-fix
+          - --no-cache
         types_or:
           - python
           - pyi
           - jupyter
       - id: ruff-format
+        args:
+          - --no-cache
         types_or:
           - python
           - pyi

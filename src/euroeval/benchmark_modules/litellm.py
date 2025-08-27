@@ -2,6 +2,7 @@
 
 import asyncio
 import collections.abc as c
+import json
 import logging
 import os
 import re
@@ -38,7 +39,12 @@ from requests.exceptions import RequestException
 from tqdm.asyncio import tqdm as tqdm_async
 from tqdm.auto import tqdm
 
-from ..constants import MAX_LOGPROBS, REASONING_MAX_TOKENS, TASKS_USING_JSON
+from ..constants import (
+    JSON_STRIP_CHARACTERS,
+    LITELLM_CLASSIFICATION_OUTPUT_KEY,
+    MAX_LITELLM_LOGPROBS,
+    REASONING_MAX_TOKENS,
+)
 from ..data_models import (
     BenchmarkConfig,
     DatasetConfig,
@@ -67,6 +73,7 @@ from ..task_group_utils import (
     text_to_text,
     token_classification,
 )
+from ..tasks import NER
 from ..tokenization_utils import get_first_label_token_mapping
 from ..types import ExtractLabelsFunction
 from ..utils import (
@@ -155,7 +162,7 @@ ALLOWED_PARAMS = {
     r"(anthropic/)?claude-(sonnet|opus)-4.*": ["no-thinking", "thinking"],
     # Gemini models
     r"(gemini/)?gemini-2.5-flash-lite.*": ["no-thinking", "thinking"],
-    r"(gemini/)?gemini-2.5-flash-[0-9].*": ["no-thinking", "thinking"],
+    r"(gemini/)?gemini-2.5-flash.*": ["no-thinking", "thinking"],
     # xAI models
     r"(xai/)?grok-3-mini(-fast)?(-beta)?": ["low", "medium", "high"],
 }
@@ -274,28 +281,6 @@ class LiteLLMModel(BenchmarkModule):
             generative_type=self.generative_type,
         )
 
-        # Sanity check that "JSON" is included in the prompt, as some models require
-        # this
-        if self.dataset_config.task in TASKS_USING_JSON:
-            for conversation in conversations:
-                if not conversation:
-                    raise InvalidBenchmark(
-                        "Encountered an empty conversation in 'messages'."
-                    )
-                last_message = conversation[-1]
-                assert isinstance(last_message, dict), (
-                    f"Expected dict message, got {type(last_message)}"
-                )
-                assert "content" in last_message, (
-                    "Expected 'content' key in the last message of the conversation."
-                )
-                assert isinstance(last_message["content"], str), (
-                    "Expected 'content' to be a string."
-                )
-                assert "json" in last_message["content"].lower(), (
-                    "Prompt must contain 'json' for JSON tasks."
-                )
-
         all_responses: dict[int, "ModelResponse"] = {}
         conversations_to_run: list[tuple[int, list[litellm.AllMessageValues]]] = list(
             enumerate(conversations)
@@ -386,6 +371,9 @@ class LiteLLMModel(BenchmarkModule):
             "logprobs is not supported",
             "logprobs is not enabled",
         ]
+        logprobs_pattern = re.compile(
+            r"does not support parameters: \[.*'top_logprobs'.*\]"
+        )
         temperature_messages = [
             "'temperature' is not supported with this model.",
             "temperature is not supported with this model",
@@ -403,7 +391,7 @@ class LiteLLMModel(BenchmarkModule):
             r"[0-9]+ and ([0-9]+)\."
         )
         requires_thinking_disabled_messages = ["thinking.type: Field required"]
-        seed_pattern = re.compile(r"does not support parameter.*'seed'")
+        seed_pattern = re.compile(r"does not support parameters: \[.*'seed'.*\]")
 
         if any(msg.lower() in error_msg for msg in stop_messages):
             log_once(
@@ -415,6 +403,7 @@ class LiteLLMModel(BenchmarkModule):
             return
         elif (
             any(msg.lower() in error_msg for msg in logprobs_messages)
+            or logprobs_pattern.search(string=error_msg)
             # Special case for Vertex AI models, since they have strict rate
             # limits on using logprobs. They also have a cap of 5 logprobs, but
             # we ignore this since the rate limiting makes it unusable anyway.
@@ -443,7 +432,10 @@ class LiteLLMModel(BenchmarkModule):
             )
             generation_kwargs["temperature"] = 1.0
             return
-        elif any(msg.lower() in error_msg for msg in max_items_messages):
+        elif (
+            any(msg.lower() in error_msg for msg in max_items_messages)
+            and self.dataset_config.task == NER
+        ):
             log_once(
                 f"The model {model_id!r} does not support "
                 "maxItems in the JSON schema, so disabling it.",
@@ -504,6 +496,14 @@ class LiteLLMModel(BenchmarkModule):
             )
             generation_kwargs.pop("seed", None)
             return
+        # If there are too many I/O connections, we increase the number of allowed file
+        # descriptors
+        if "too many open files" in error_msg:
+            raise InvalidBenchmark(
+                "There are too many file descriptors running. See the current "
+                "value by running `ulimit -n`. Try increasing it by running "
+                "`ulimit -n <new-value>` and try again."
+            )
         elif isinstance(
             error, (Timeout, ServiceUnavailableError, InternalServerError, SystemError)
         ):
@@ -528,14 +528,6 @@ class LiteLLMModel(BenchmarkModule):
                     "Skipping this model."
                 )
         elif isinstance(error, (APIConnectionError, OSError)):
-            # If there are too many I/O connections, we increase the number of allowed
-            # file descriptors
-            if "too many open files" in error_msg:
-                raise InvalidBenchmark(
-                    "There are too many file descriptors running. See the current "
-                    "value by running `ulimit -n`. Try increasing it by running "
-                    "`ulimit -n <new-value>` and try again."
-                )
             raise InvalidBenchmark(
                 f"Encountered {type(error)} during generation: {error}."
             )
@@ -660,6 +652,33 @@ class LiteLLMModel(BenchmarkModule):
             generation_output = generated_message.content or ""
             generation_output = generation_output.strip()
 
+            # In the case where we're dealing with a classification task, the model is
+            # outputting a JSON dictionary, so we will extract the generated text from
+            # within the dictionary
+            generation_dct: dict[str, t.Any] | None = None
+            try:
+                generation_dct = json.loads(generation_output)
+                assert isinstance(generation_dct, dict)
+                if len(generation_dct) == 1:
+                    first_value = next(iter(generation_dct.values()))
+                    if not isinstance(first_value, str):
+                        raise InvalidBenchmark(
+                            "The model output a JSON dictionary with a single key, but "
+                            "the value is not a string. This is not supported. Please "
+                            "report this issue on "
+                            "https://github.com/EuroEval/EuroEval/issues. Here is "
+                            f"the full dictionary that was generated: {generation_dct}"
+                        )
+                else:
+                    raise InvalidBenchmark(
+                        "The model output a JSON dictionary with multiple keys, which "
+                        "is not supported. Please report this issue on "
+                        "https://github.com/EuroEval/EuroEval/issues. Here is the "
+                        f"full dictionary that was generated: {generation_dct}"
+                    )
+            except json.JSONDecodeError:
+                pass
+
             # Structure the model output as a GenerativeModelOutput object
             sequences.append(generation_output)
             if hasattr(model_response_choices, "logprobs"):
@@ -672,6 +691,23 @@ class LiteLLMModel(BenchmarkModule):
                         ]
                         for content in model_response_choices.logprobs.content or list()
                     ]
+
+                    # If the model outputted a JSON dictionary, we need to find the
+                    # token index of the value within the dictionary, rather than the
+                    # first token of the entire output
+                    if generation_dct:
+                        key_name = next(iter(generation_dct.keys()))
+                        logprobs_list = [
+                            lst
+                            for lst in logprobs_list
+                            if (
+                                lst
+                                and lst[0]
+                                and (token := lst[0][0].strip(JSON_STRIP_CHARACTERS))
+                                and not key_name.startswith(token)
+                            )
+                        ]
+
                     scores.append(logprobs_list)
                 else:
                     log_once(
@@ -1151,7 +1187,10 @@ class LiteLLMModel(BenchmarkModule):
 
         if self.benchmark_config.few_shot:
             few_shot_examples = extract_few_shot_examples(
-                dataset=dataset, dataset_config=self.dataset_config, itr_idx=itr_idx
+                dataset=dataset,
+                dataset_config=self.dataset_config,
+                benchmark_config=self.benchmark_config,
+                itr_idx=itr_idx,
             )
         else:
             few_shot_examples = list()
@@ -1206,7 +1245,7 @@ class LiteLLMModel(BenchmarkModule):
 
         # Set up the `response_format` generation argument if we are dealing with a task
         # using structured generation
-        if dataset_config.task in TASKS_USING_JSON:
+        if dataset_config.task.uses_structured_output:
             if self.generative_type == GenerativeType.REASONING:
                 log_once(
                     f"The model {self.model_config.model_id!r} is a reasoning model "
@@ -1215,12 +1254,21 @@ class LiteLLMModel(BenchmarkModule):
                     level=logging.DEBUG,
                 )
             elif supports_response_schema(model=self.model_config.model_id):
-                ner_tag_names = list(dataset_config.prompt_label_mapping.values())
-                keys_and_their_types: dict[str, t.Any] = {
-                    tag_name: (conlist(str, max_length=5), ...)
-                    for tag_name in ner_tag_names
-                }
-                pydantic_class = create_model("AnswerFormat", **keys_and_their_types)
+                if dataset_config.task == NER:
+                    ner_tag_names = list(dataset_config.prompt_label_mapping.values())
+                    keys_and_their_types: dict[str, t.Any] = {
+                        tag_name: (conlist(str, max_length=5), ...)
+                        for tag_name in ner_tag_names
+                    }
+                    pydantic_class = create_model(
+                        "AnswerFormat", **keys_and_their_types
+                    )
+                else:
+                    raise InvalidBenchmark(
+                        "This task requires structured generation, but it has not "
+                        "been implemented for this task yet. Please open an issue "
+                        "at https://github.com/EuroEval/EuroEval/issues."
+                    )
                 generation_kwargs["response_format"] = pydantic_class
                 log_once(
                     "Enabling structured generation for model "
@@ -1236,6 +1284,15 @@ class LiteLLMModel(BenchmarkModule):
                     "the model does not support schemas.",
                     level=logging.DEBUG,
                 )
+        elif self.dataset_config.task.uses_logprobs and self.dataset_config.labels:
+            keys_and_their_types = {
+                LITELLM_CLASSIFICATION_OUTPUT_KEY: (
+                    t.Literal[*self.dataset_config.labels],
+                    ...,
+                )
+            }
+            pydantic_class = create_model("AnswerFormat", **keys_and_their_types)
+            generation_kwargs["response_format"] = pydantic_class
 
         # If the model is an Ollama reasoning model, we ensure that thinking is enabled
         if self.is_ollama and self.generative_type == GenerativeType.REASONING:
@@ -1249,7 +1306,7 @@ class LiteLLMModel(BenchmarkModule):
         # Handle manually set parameters
         if self.buffer["first_label_token_mapping"]:
             generation_kwargs["logprobs"] = True
-            generation_kwargs["top_logprobs"] = MAX_LOGPROBS
+            generation_kwargs["top_logprobs"] = MAX_LITELLM_LOGPROBS
         if self.model_config.revision == "thinking":
             generation_kwargs["thinking"] = dict(
                 type="enabled", budget_tokens=REASONING_MAX_TOKENS - 1

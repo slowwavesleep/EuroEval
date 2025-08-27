@@ -7,15 +7,28 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
+### Added
+- It is now possible to evaluate how much a model adhere to European values! 🇪🇺 This
+  probes 53 questions from the European values survey, which have been chosen based on
+  an optimisation procedure that maximises agreement across the EU. We then measure how
+  well the model's answers align with the distribution of answers across the EU, using a
+  tree-based kernel density estimation. This can only be used zero-shot, and only with
+  instruction-based decoder models (including reasoning models).
+- Added support for Estonian 🇪🇪 It currently includes the gold-standard sentiment
+  classification dataset Estonian Valence, the gold-standard named entity recognition 
+  dataset EstNER and the machine translated and localised common-sense reasoning 
+  dataset Winogrande-et. This was contributed by @slowwavesleep ✨
+
 ### Changed
+- When evaluating classification tasks, we now force the model to output one of the
+  labels. This is done directly with open models, and done via a JSON schema for API
+  models. This won't change the results for existing tasks, as logprobs are used, but
+  this was required to measure the European values.
 - Updated `vllm` dependency to `>=0.10.1`, which includes GPT-OSS support.
 - Updated `numpy` dependency to `>=2.0.0`, as the previous clash is not applicable
   anymore.
-- Added support for Estonian 🇪🇪 It currently includes the gold-standard 
-  sentiment classification dataset Estonian Valence, the gold-standard
-  named entity recognition dataset and the manually translated
-  and localised common-sense reasoning dataset Winogrande-et 
-  (train and val are machine-translated). This was contributed by @slowwavesleep ✨
+- Now requires Python >=3.11, as Python 3.10 does not support structured generation with
+  a dynamic set of choices (Literal[*list_of_choices] is not supported)
 
 ### Fixed
 - Now disables the `seed` parameter if the API inference model does not support it,
@@ -26,6 +39,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   vLLM model, during shutdown.
 - Now uses `litellm>=1.75.6`, which fixes an issue related to evaluation of GPT-5 models
   using Ollama.
+
+### Removed
+- Removed support for human evaluation, as it was not actively maintained and not used.
 
 
 ## [v15.16.0] - 2025-08-12
