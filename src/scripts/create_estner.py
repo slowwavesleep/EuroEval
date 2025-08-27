@@ -86,7 +86,10 @@ def get_label_map() -> dict[str, str]:
     for label in original_labels:
         position, entity_type = label.split("-")
         if entity_type not in ("PER", "LOC", "ORG", "MISC"):
-            label_map[label] = f"{position}-MISC"
+            if entity_type in ("DATE", "TIME", "PERCENT", "MONEY"):
+                label_map[label] = "O"
+            else:
+                label_map[label] = f"{position}-{entity_type}"
 
     return label_map
 
