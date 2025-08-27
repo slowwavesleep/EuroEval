@@ -139,7 +139,7 @@ $ euroeval --model <model-id> --dataset winogrande-et
 ### EstNER
 
 This dataset was published in [this paper](https://aclanthology.org/2023.nodalida-1.76/).
-The dataset is a manually annotated collection of Estonian news and 
+The dataset is a manually annotated collection of Estonian news and
 social media texts.
 
 The original dataset contains 16,966 / 3,297 / 2,797 samples for the training,
@@ -185,7 +185,7 @@ When evaluating generative models, we use the following setup (see the
   ```
   Lause: {text}
 
-  Tuvasta lauses nimetatud üksused. Väljund peaks olema JSON-sõnastik, mille võtmed on 'inimene', 'asukoht', 'organisatsioon' ja 'muu'. 
+  Tuvasta lauses nimetatud üksused. Väljund peaks olema JSON-sõnastik, mille võtmed on 'inimene', 'asukoht', 'organisatsioon' ja 'muu'.
   Väärtused peaksid olema kindlat tüüpi nimetatud üksuste loendid, täpselt nii nagu need lauses esinevad.
   ```
 - Label mapping:

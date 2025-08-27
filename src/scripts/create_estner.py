@@ -56,7 +56,7 @@ def main() -> None:
 
 def get_label_map() -> dict[str, str]:
     """Get the map from original labels to the EuroEval ones.
-    
+
     Returns:
         The mapping.
     """
@@ -98,11 +98,11 @@ def get_label_map() -> dict[str, str]:
 
 def convert_labels(row: MutableMapping) -> MutableMapping:
     """Convert original labels in a row to new ones.
-    
+
     Args:
         row:
             A row of the original dataset.
-            
+
     Returns:
         The updated row, with the new labels.
     """

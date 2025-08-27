@@ -15,10 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   tree-based kernel density estimation. This can only be used zero-shot, and only with
   instruction-based decoder models (including reasoning models).
 - Added support for Estonian 🇪🇪 It currently includes the gold-standard sentiment
-  classification dataset Estonian Valence, the gold-standard named entity recognition 
-  dataset EstNER and the translated common-sense reasoning 
+  classification dataset Estonian Valence, the gold-standard named entity recognition
+  dataset EstNER and the translated common-sense reasoning
   dataset Winogrande-et which includes manually translated and localised test split,
-  as well as mahine-translated train and validation splits. This was 
+  as well as mahine-translated train and validation splits. This was
   contributed by @slowwavesleep ✨
 
 ### Changed
