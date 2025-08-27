@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Run pre-commit hooks
-        uses: pre-commit/action@3.0.1
+        uses: pre-commit/action@v3.0.1
 
   pytest-linux:
     if: github.event.pull_request.draft == false
