@@ -8,9 +8,10 @@
 # ///
 
 """Create the Estonian NER dataset and upload to HF Hub."""
+
 from typing import MutableMapping
 
-from datasets import load_dataset, DatasetDict
+from datasets import DatasetDict, load_dataset
 from huggingface_hub import HfApi
 from requests import HTTPError
 
@@ -33,11 +34,7 @@ def main() -> None:
     val_ds = ds["dev"].select(range(val_size))
     test_ds = ds["test"].select(range(test_size))
 
-    ds = DatasetDict(
-        train=train_ds,
-        val=val_ds,
-        test=test_ds,
-    )
+    ds = DatasetDict(train=train_ds, val=val_ds, test=test_ds)
 
     ds = ds.rename_column("ner_tags", "labels")
     # a separate text column is not available
