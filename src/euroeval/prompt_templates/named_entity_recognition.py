@@ -94,10 +94,10 @@ NER_TEMPLATES = {
         default_prompt_prefix="Allpool on laused ja JSON-sõnastikud, mis sisaldavad antud lauses "
         "esinevaid nimetatud üksuseid.",
         default_prompt_template="Lause: {text}\nNimetatud üksused: {label}",
-        default_instruction_prompt="Lause: {text}\n\nTunnista lauses olevad "
-        "nimetatud üksused. Sa peaksid selle väljastama JSON sõnastikuna, "
-        "mille võtmed on {labels_str}. Väärtused peaksid olema nende tüüpide "
-        "nimetatud üksuste sama tüüpi, täpselt nii nagu need lauses esinevad.",
+        default_instruction_prompt="Lause: {text}\n\nTuvasta lauses "
+        "nimetatud üksused. Väljund peaks olema JSON-sõnastik, "
+        "mille võtmed on {labels_str}. Väärtused peaksid olema kindlat tüüpi nimetatud üksuste "
+        "loendid, täpselt nii nagu need lauses esinevad.",
     ),
     PT: PromptConfig(
         default_prompt_label_mapping={
