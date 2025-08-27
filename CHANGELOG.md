@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Updated `numpy` dependency to `>=2.0.0`, as the previous clash is not applicable
   anymore.
 - Added support for Estonian 🇪🇪 It currently includes the gold-standard 
-   sentiment classification dataset Estonian Valence and the machine 
-   translated and localised common-sense reasoning dataset Winogrande-et. 
-   This was contributed by @slowwavesleep ✨
+  sentiment classification dataset Estonian Valence, the gold-standard
+  named entity recognition dataset and the manually translated
+  and localised common-sense reasoning dataset Winogrande-et 
+  (train and val are machine-translated). This was contributed by @slowwavesleep ✨
 
 ### Fixed
 - Now disables the `seed` parameter if the API inference model does not support it,
