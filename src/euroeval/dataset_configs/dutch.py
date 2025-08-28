@@ -91,6 +91,7 @@ EUROPEAN_VALUES_NL_CONFIG = DatasetConfig(
 #     splits=["test"],
 #     bootstrap_samples=False,
 #     _instruction_prompt="{text}",
+#     unofficial=True,
 # )
 
 EUROPEAN_VALUES_COMPLETIONS_NL_CONFIG = DatasetConfig(
@@ -103,6 +104,7 @@ EUROPEAN_VALUES_COMPLETIONS_NL_CONFIG = DatasetConfig(
     splits=["test"],
     bootstrap_samples=False,
     _instruction_prompt="{text}",
+    unofficial=True,
 )
 
 

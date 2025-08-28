@@ -115,6 +115,7 @@ EUROPEAN_VALUES_SITUATIONAL_NO_CONFIG = DatasetConfig(
     splits=["test"],
     bootstrap_samples=False,
     _instruction_prompt="{text}",
+    unofficial=True,
 )
 
 EUROPEAN_VALUES_COMPLETIONS_NO_CONFIG = DatasetConfig(
@@ -127,6 +128,7 @@ EUROPEAN_VALUES_COMPLETIONS_NO_CONFIG = DatasetConfig(
     splits=["test"],
     bootstrap_samples=False,
     _instruction_prompt="{text}",
+    unofficial=True,
 )
 
 
