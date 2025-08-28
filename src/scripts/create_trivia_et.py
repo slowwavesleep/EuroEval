@@ -9,15 +9,15 @@
 
 from typing import MutableMapping
 
-from datasets import Dataset, DatasetDict, concatenate_datasets, load_dataset
+from datasets import DatasetDict, concatenate_datasets, load_dataset
 from huggingface_hub import HfApi
 from requests import HTTPError
 
 """Create the Estonian Trivia dataset and upload to HF Hub."""
 
-def main():
-    """Create the Estonian Trivia dataset and upload to HF Hub."""
 
+def main() -> None:
+    """Create the Estonian Trivia dataset and upload to HF Hub."""
     target_repo_id = "EuroEval/trivia-et"
 
     # start from the official source
@@ -33,7 +33,7 @@ def main():
 
     ds = ds.shuffle(seed=42)
 
-    train_size = 240  - len(doc_examples)
+    train_size = 240 - len(doc_examples)
     val_size = 60
     test_size = 500
 
@@ -44,7 +44,7 @@ def main():
     ds = DatasetDict({"train": train_ds, "val": val_ds, "test": test_ds})
 
     ds = ds.select_columns(["text", "label"])
-    
+
     try:
         api = HfApi()
         api.delete_repo(target_repo_id, repo_type="dataset")
@@ -69,7 +69,6 @@ def add_options_and_label(row: MutableMapping) -> MutableMapping:
     label = letters[answer]
 
     return {"text": text, "label": label}
-
 
 
 if __name__ == "__main__":
