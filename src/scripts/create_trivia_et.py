@@ -44,6 +44,7 @@ def main() -> None:
     ds = DatasetDict({"train": train_ds, "val": val_ds, "test": test_ds})
 
     ds = ds.select_columns(["text", "label"])
+    print(ds["train"][-3])
 
     try:
         api = HfApi()
