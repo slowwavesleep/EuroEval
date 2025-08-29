@@ -20,7 +20,7 @@ def main() -> None:
     target_repo_id = "EuroEval/trivia-et"
 
     # start from the official source
-    ds = load_dataset("TalTechNLP/trivia_et")["train"]
+    ds = load_dataset("TalTechNLP/trivia_et", split="train")
 
     ds = ds.map(add_options_and_label)
 
