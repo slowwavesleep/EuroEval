@@ -42,6 +42,7 @@ def main() -> None:
             with zip_file.open(value) as csv_file:
                 df = pd.read_csv(csv_file)
                 ds[key] = Dataset.from_pandas(df)
+
     ds = ds.select_columns(["transcript", "summary"])
     ds = ds.rename_columns({"transcript": "text", "summary": "target_text"})
 
