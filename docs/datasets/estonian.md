@@ -133,3 +133,73 @@ You can evaluate this dataset directly as follows:
 ```bash
 $ euroeval --model <model-id> --dataset winogrande-et
 ```
+
+## Named Entity Recognition
+
+### EstNER
+
+This dataset was published in [this paper](https://aclanthology.org/2023.nodalida-1.76/).
+The dataset is a manually annotated collection of Estonian news and
+social media texts.
+
+The original dataset contains 16,966 / 3,297 / 2,797 samples for the training,
+validation and test splits, respectively. We use 1,024 / 256 / 2,048 samples for our
+training, validation and test splits, respectively. All the new splits are subsets of
+the original splits.
+
+Here are a few examples from the training split:
+
+```json
+{
+  "tokens": ["Katse", "lõpuni", "jätkas", "34aastane", "tiitlijahtija", "kolmel", "rattal", "."],
+  "labels": ["O", "O", "O", "O", "O", "O", "O", "O"]
+}
+```
+```json
+{
+  "tokens": ["“", "Kui", "tegemist", "oleks", "olnud", "piletiga", "peoga", ",", "peaksime", "inimestele", "raha", "tagasi", "maksma", ",", "nüüd", "saame", "üksnes", "külalistelt", "vabandust", "paluda", ",”ütles", "Järvamaa", "omavalitsuste", "liidu", "tegevdirektor", "Krista", "Nurm", "ajalehele", "Järvamaa", "Teataja", "."],
+  "labels": ["O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "O", "B-ORG", "I-ORG", "I-ORG", "B-MISC", "B-PER", "I-PER", "O", "B-MISC", "I-MISC", "O"]
+}
+```
+```json
+{
+  "tokens": ["Makke", "lõpetas", "Quincy", "keskkooli", "Illinoisi", "osariigis", "ja", "plaanib", "sportlasstipendiumi", "abil", "edasi", "õppida", "Lääne-Illinoisi", "ülikoolis", ",", "mille", "korvpallimeeskond", "kuulub", "USA", "üliõpilasliiga", "NCAA", "esimesse", "divisjoni", "."],
+  "labels": ["B-PER", "O", "B-ORG", "I-ORG", "B-MISC", "I-MISC", "O", "O", "O", "O", "O", "O", "B-ORG", "I-ORG", "O", "O", "O", "O", "B-ORG", "I-ORG", "B-ORG", "O", "O", "O"]
+}
+```
+
+When evaluating generative models, we use the following setup (see the
+[methodology](/methodology) for more information on how these are used):
+
+- Number of few-shot examples: 8
+- Prefix prompt:
+  ```
+  Allpool on laused ja JSON-sõnastikud, mis sisaldavad antud lauses esinevaid nimetatud üksuseid.
+  ```
+- Base prompt template:
+  ```
+  Lause: {text}
+  Nimetatud üksused: {label}
+  ```
+- Instruction-tuned prompt template:
+  ```
+  Lause: {text}
+
+  Tuvasta lauses nimetatud üksused. Väljund peaks olema JSON-sõnastik, mille võtmed on 'inimene', 'asukoht', 'organisatsioon' ja 'muu'.
+  Väärtused peaksid olema kindlat tüüpi nimetatud üksuste loendid, täpselt nii nagu need lauses esinevad.
+  ```
+- Label mapping:
+    - `B-PER` ➡️ `inimene`
+    - `I-PER` ➡️ `inimene`
+    - `B-LOC` ➡️ `asukoht`
+    - `I-LOC` ➡️ `asukoht`
+    - `B-ORG` ➡️ `organisatsioon`
+    - `I-ORG` ➡️ `organisatsioon`
+    - `B-MISC` ➡️ `muu`
+    - `I-MISC` ➡️ `muu`
+
+You can evaluate this dataset directly as follows:
+
+```bash
+$ euroeval --model <model-id> --dataset estner
+```

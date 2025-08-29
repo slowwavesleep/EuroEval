@@ -1,7 +1,7 @@
 """Templates for the Named Entity Recognition task."""
 
 from ..data_models import PromptConfig
-from ..languages import DA, DE, EN, ES, FI, FO, FR, IS, IT, NB, NL, NN, NO, PT, SV
+from ..languages import DA, DE, EN, ES, ET, FI, FO, FR, IS, IT, LV, NB, NL, NN, NO, PT, SV
 
 NER_TEMPLATES = {
     DA: PromptConfig(
@@ -79,6 +79,25 @@ NER_TEMPLATES = {
         "nombradas en la oración. Debes producir esto como un diccionario JSON con las "
         "claves {labels_str}. Los valores deben ser listas de las "
         "entidades nombradas de ese tipo, exactamente como aparecen en la oración.",
+    ),
+    ET: PromptConfig(
+        default_prompt_label_mapping={
+            "b-per": "inimene",
+            "i-per": "inimene",
+            "b-loc": "asukoht",
+            "i-loc": "asukoht",
+            "b-org": "organisatsioon",
+            "i-org": "organisatsioon",
+            "b-misc": "muu",
+            "i-misc": "muu",
+        },
+        default_prompt_prefix="Allpool on laused ja JSON-sõnastikud, mis sisaldavad "
+        "antud lauses esinevaid nimetatud üksuseid.",
+        default_prompt_template="Lause: {text}\nNimetatud üksused: {label}",
+        default_instruction_prompt="Lause: {text}\n\nTuvasta lauses "
+        "nimetatud üksused. Väljund peaks olema JSON-sõnastik, "
+        "mille võtmed on {labels_str}. Väärtused peaksid olema kindlat tüüpi nimetatud "
+        "üksuste loendid, täpselt nii nagu need lauses esinevad.",
     ),
     PT: PromptConfig(
         default_prompt_label_mapping={
@@ -196,6 +215,26 @@ NER_TEMPLATES = {
         "nella frase. Il risultato dovrebbe essere un dizionario JSON con le chiavi "
         "{labels_str}. I valori devono essere elenchi di entità "
         "nominate di quel tipo, esattamente come appaiono nella frase.",
+    ),
+    LV: PromptConfig(
+        default_prompt_label_mapping={
+            "b-per": "persona",
+            "i-per": "persona",
+            "b-loc": "vieta",
+            "i-loc": "vieta",
+            "b-org": "organizācija",
+            "i-org": "organizācija",
+            "b-misc": "dažādi",
+            "i-misc": "dažādi",
+        },
+        default_prompt_prefix="Tālāk ir teikumi un JSON vārdnīcas ar nosauktajiem "
+        "objektiem, kas parādās dotajā teikumā.",
+        default_prompt_template="Teikums: {text}\nNosauktie objekti: {label}",
+        default_instruction_prompt="Teikums: {text}\n\n"
+        "Identificējiet nosauktos objektus "
+        "teikumā. Jums jāizvada šī informācija kā JSON vārdnīcu ar atslēgām "
+        "{labels_str}. Vērtībām jābūt šī tipa nosaukto objektu sarakstiem, "
+        "tieši tā, kā tie parādās teikumā.",
     ),
     NB: PromptConfig(
         default_prompt_label_mapping={
