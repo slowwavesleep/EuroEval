@@ -6,14 +6,13 @@
 #     "requests==2.32.5",
 # ]
 # ///
+"""Create the Estonian Trivia dataset and upload to HF Hub."""
 
 from typing import MutableMapping
 
 from datasets import DatasetDict, concatenate_datasets, load_dataset
 from huggingface_hub import HfApi
 from requests import HTTPError
-
-"""Create the Estonian Trivia dataset and upload to HF Hub."""
 
 
 def main() -> None:
@@ -44,7 +43,6 @@ def main() -> None:
     ds = DatasetDict({"train": train_ds, "val": val_ds, "test": test_ds})
 
     ds = ds.select_columns(["text", "label"])
-    print(ds["train"][-3])
 
     try:
         api = HfApi()
