@@ -39,8 +39,8 @@ def main() -> None:
 
     with zipfile.ZipFile(temp_filename) as zip_file:
         for key, value in file_map.items():
-            with zip_file.open(value) as tsv_file:
-                df = pd.read_csv(tsv_file)
+            with zip_file.open(value) as csv_file:
+                df = pd.read_csv(csv_file)
                 ds[key] = Dataset.from_pandas(df)
     ds = ds.select_columns(["transcript", "summary"])
     ds = ds.rename_columns({"transcript": "text", "summary": "target_text"})
