@@ -42,7 +42,7 @@ ESTNER_CONFIG = DatasetConfig(
 
 TRIVIA_ET_CONFIG = DatasetConfig(
     name="trivia-et",
-    pretty_name="the Estonian knoweledge dataset Trivia-et",
+    pretty_name="the Estonian knowledge dataset Trivia-et",
     huggingface_id="EuroEval/trivia-et",
     task=KNOW,
     languages=[ET],
