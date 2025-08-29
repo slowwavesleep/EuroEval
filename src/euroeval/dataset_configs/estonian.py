@@ -2,7 +2,7 @@
 
 from ..data_models import DatasetConfig
 from ..languages import ET
-from ..tasks import COMMON_SENSE, NER, SENT
+from ..tasks import COMMON_SENSE, NER, SENT, KNOW
 
 ### Official datasets ###
 
@@ -37,5 +37,13 @@ ESTNER_CONFIG = DatasetConfig(
     pretty_name="the Estonian named entity recognition dataset EstNER",
     huggingface_id="EuroEval/estner-mini",
     task=NER,
+    languages=[ET],
+)
+
+TRIVIA_ET_CONFIG = DatasetConfig(
+    name="trivia-et",
+    pretty_name="the Estonian knoweledge dataset Trivia-et",
+    huggingface_id="EuroEval/trivia-et",
+    task=KNOW,
     languages=[ET],
 )
