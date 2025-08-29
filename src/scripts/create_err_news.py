@@ -4,7 +4,7 @@
 #     "datasets==4.0.0",
 #     "huggingface-hub==0.34.4",
 #     "requests==2.32.5",
-#     "pandas==2.3.1,
+#     "pandas==2.3.1",
 # ]
 # ///
 
