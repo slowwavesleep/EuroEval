@@ -2,7 +2,7 @@
 
 from ..data_models import DatasetConfig
 from ..languages import ET
-from ..tasks import COMMON_SENSE, NER, SENT
+from ..tasks import COMMON_SENSE, NER, SENT, SUMM
 
 ### Official datasets ###
 
@@ -39,3 +39,12 @@ ESTNER_CONFIG = DatasetConfig(
     task=NER,
     languages=[ET],
 )
+
+ERR_NEWS_CONFIG = DatasetConfig(
+    name="err-news",
+    pretty_name="the Estonian summarisation dataset ErrNews",
+    huggingface_id="EuroEval/err-news-mini",
+    task=SUMM,
+    languages=[ET],
+)
+
