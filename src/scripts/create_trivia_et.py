@@ -65,7 +65,7 @@ def add_options_and_label(row: MutableMapping) -> MutableMapping:
     options = [f"{letters[i]}. {options[i]}" for i in range(len(options))]
     options = "\n".join(options)
 
-    text = f"Küsimus: {question}\nVastusevariandid:\n{options}"
+    text = f"{question}\nVastusevariandid:\n{options}"
     label = letters[answer]
 
     return {"text": text, "label": label}
