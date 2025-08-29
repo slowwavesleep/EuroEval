@@ -8,7 +8,7 @@
 # ]
 # ///
 
-"""Create the ErrNews summarisation dataset."""
+"""Create the ERRNews summarisation dataset."""
 
 import os
 import tempfile
@@ -22,7 +22,7 @@ from requests import HTTPError
 
 
 def main() -> None:
-    """Create the ErrNews summarisation dataset."""
+    """Create the ERRNews summarisation dataset."""
     source_url = "https://cs.taltech.ee/staff/heharm/ERRnews/data.zip"
     target_repo_id = "EuroEval/err-news-mini"
 
@@ -42,7 +42,6 @@ def main() -> None:
             with zip_file.open(value) as tsv_file:
                 df = pd.read_csv(tsv_file)
                 ds[key] = Dataset.from_pandas(df)
-
     ds = ds.select_columns(["transcript", "summary"])
     ds = ds.rename_columns({"transcript": "text", "summary": "target_text"})
 

@@ -47,4 +47,3 @@ ERR_NEWS_CONFIG = DatasetConfig(
     task=SUMM,
     languages=[ET],
 )
-
