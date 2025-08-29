@@ -1,7 +1,25 @@
 """Templates for the Named Entity Recognition task."""
 
 from ..data_models import PromptConfig
-from ..languages import DA, DE, EN, ES, ET, FI, FO, FR, IS, IT, LV, NB, NL, NN, NO, PT, SV
+from ..languages import (
+    DA,
+    DE,
+    EN,
+    ES,
+    ET,
+    FI,
+    FO,
+    FR,
+    IS,
+    IT,
+    LV,
+    NB,
+    NL,
+    NN,
+    NO,
+    PT,
+    SV,
+)
 
 NER_TEMPLATES = {
     DA: PromptConfig(
