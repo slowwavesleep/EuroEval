@@ -26,6 +26,7 @@ def main() -> None:
     val_size = 256 // 2
     test_size = 2048 // 2
 
+    # rearrange the examples
     train_ds = ds["train"].select(range(train_size))
     val_ds = ds["train"].skip(train_size).select(range(val_size))
     test_ds = concatenate_datasets(
@@ -36,9 +37,9 @@ def main() -> None:
             .select(range(test_size - ds["test"].num_rows)),
         ]
     )
-
     ds = DatasetDict({"train": train_ds, "val": val_ds, "test": test_ds})
 
+    # separate pairs into individual rows with labels
     new_ds = DatasetDict({})
     for split in ds:
         cur_ds = ds[split]
@@ -55,7 +56,6 @@ def main() -> None:
             }
         )
         new_ds[split] = concatenate_datasets([original_ds, corrected_ds])
-
     new_ds = new_ds.shuffle(seed=42)
 
     try:
