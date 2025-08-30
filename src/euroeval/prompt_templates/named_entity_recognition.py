@@ -1,5 +1,7 @@
 """Templates for the Named Entity Recognition task."""
 
+import typing as t
+
 from ..data_models import PromptConfig
 from ..languages import (
     DA,
@@ -21,7 +23,11 @@ from ..languages import (
     SV,
 )
 
-NER_TEMPLATES = {
+if t.TYPE_CHECKING:
+    from ..data_models import Language
+
+
+NER_TEMPLATES: dict["Language", PromptConfig] = {
     DA: PromptConfig(
         default_prompt_label_mapping={
             "b-per": "person",
