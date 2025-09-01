@@ -5,6 +5,9 @@ import re
 import typing as t
 
 import torch
+from transformers import MistralCommonTokenizer
+
+from euroeval.exceptions import InvalidModel
 
 from .enums import GenerativeType
 from .utils import log_once
@@ -333,16 +336,13 @@ def get_end_of_chat_token_ids(tokenizer: "PreTrainedTokenizer") -> list[int] | N
         ValueError:
             If the end-of-chat token could not be located.
     """
-    if tokenizer.chat_template is None:
+    if not has_chat_template(tokenizer=tokenizer):
         return None
 
     user_message: dict[str, str] = dict(role="user", content="X")
     token_ids: list[int] = tokenizer.apply_chat_template(conversation=[user_message])  # type: ignore[assignment]
 
     for idx, token in enumerate(tokenizer.convert_ids_to_tokens(token_ids)):
-        token_id = tokenizer.convert_tokens_to_ids(token)
-        assert isinstance(token_id, int)
-        token = tokenizer.decode([token_id])
         if "X" in token:
             x_token_index = idx
             break
@@ -351,7 +351,12 @@ def get_end_of_chat_token_ids(tokenizer: "PreTrainedTokenizer") -> list[int] | N
 
     end_of_chat_tokens = token_ids[x_token_index + 1 :]
     if len(end_of_chat_tokens) == 0:
-        return None
+        raise ValueError("Could not locate the end-of-chat token for the model.")
+    log_once(
+        f"Detected end-of-chat token IDs as {end_of_chat_tokens}, corresponding to "
+        f"tokens {tokenizer.convert_ids_to_tokens(end_of_chat_tokens)}.",
+        level=logging.DEBUG,
+    )
     return end_of_chat_tokens
 
 
@@ -414,7 +419,7 @@ def get_first_label_token_mapping(
     # Tokenize some text containing each label, which we will use to extract the
     # first token of each label
     all_tokens: list[list[str]]
-    if tokenizer.chat_template is None:
+    if not has_chat_template(tokenizer=tokenizer):
         add_prefix_space = should_prefix_space_be_added_to_labels(
             labels_to_be_generated=local_labels, tokenizer=tokenizer
         )
@@ -425,12 +430,15 @@ def get_first_label_token_mapping(
     else:
         all_tokens = [
             tokenizer.convert_ids_to_tokens(
-                ids=tokenizer.apply_chat_template(
+                ids=apply_chat_template(
                     conversation=[
                         dict(role="user", content=""),
                         dict(role="assistant", content=label),
+                        # Adding extra user message as Mistral tokenisers require
+                        # conversamtions to end with a user message
+                        dict(role="user", content=""),
                     ],
-                    add_generation_prompt=True,
+                    tokenizer=tokenizer,
                     tokenize=True,
                 )
             )
@@ -467,15 +475,16 @@ def get_first_label_token_mapping(
     # Build a mapping from labels to the first token in each label if the first
     # tokens are distinct
     if len(first_tokens) == len(set(first_tokens)):
-        if log_metadata:
-            log_once(
-                "We will use logprobs with the model since the first tokens of the "
-                "labels are distinct.",
-                level=logging.DEBUG,
-            )
-        return {
+        mapping = {
             label: first_token for label, first_token in zip(local_labels, first_tokens)
         }
+        if log_metadata:
+            log_once(
+                "Using logprobs as evaluation strategy for the model, with the "
+                f"following mapping from labels to their first token: {mapping}.",
+                level=logging.DEBUG,
+            )
+        return mapping
     else:
         if log_metadata:
             log_once(
@@ -484,3 +493,82 @@ def get_first_label_token_mapping(
                 f"{local_labels} are {first_tokens}"
             )
         return False
+
+
+def has_chat_template(tokenizer: "PreTrainedTokenizer") -> bool:
+    """Check if a tokenizer has a chat template.
+
+    Args:
+        tokenizer:
+            The tokenizer.
+
+    Returns:
+        Whether the tokenizer has a chat template.
+    """
+    if hasattr(tokenizer, "chat_template"):
+        has_template = tokenizer.chat_template is not None
+        if has_template:
+            log_once(
+                "The tokenizer has a chat template, so assuming that the model is "
+                "instruction tuned.",
+                level=logging.DEBUG,
+            )
+        return has_template
+    elif isinstance(tokenizer, MistralCommonTokenizer):
+        log_once(
+            "The tokenizer is a Mistral tokeniser, so assuming that the model is "
+            "instruction tuned."
+        )
+        return True
+    else:
+        log_once(
+            "We cannot find a chat template for the tokenizer, so assuming that the "
+            "model isn't instruction tuned."
+        )
+        return False
+
+
+def apply_chat_template(
+    conversation: list[dict[str, str]],
+    tokenizer: "PreTrainedTokenizer",
+    tokenize: bool = False,
+    **transformers_tokenizer_kwargs,
+) -> str | list[int]:
+    """Apply the chat template to a prompt.
+
+    Args:
+        conversation:
+            The conversation to apply the chat template to.
+        tokenizer:
+            The tokenizer.
+        tokenize:
+            Whether to tokenize the resulting prompt, returning a list of token IDs
+            instead of a string.
+        **transformers_tokenizer_kwargs:
+            Additional keyword arguments to pass to the tokenizer, in case the tokenizer
+            is a regular Hugging Face tokenizer.
+
+    Returns:
+        The prompt with the chat template applied, either as a string or a list of
+        token IDs, depending on the value of `tokenize`.
+
+    Raises:
+        InvalidModel:
+            If the tokeniser does not have a chat template.
+    """
+    if not has_chat_template(tokenizer=tokenizer):
+        raise InvalidModel(
+            "The tokenizer does not have a chat template, so cannot apply it."
+        )
+    elif isinstance(tokenizer, MistralCommonTokenizer):
+        templated_prompt = tokenizer.apply_chat_template(
+            conversation=conversation, tokenize=tokenize
+        )
+    else:
+        templated_prompt = tokenizer.apply_chat_template(
+            conversation=conversation,
+            add_generation_prompt=True,
+            tokenize=tokenize,
+            **transformers_tokenizer_kwargs,
+        )
+    return templated_prompt

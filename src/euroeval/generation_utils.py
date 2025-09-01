@@ -8,6 +8,7 @@ import typing as t
 
 from .enums import TaskGroup
 from .exceptions import InvalidBenchmark
+from .tokenization_utils import apply_chat_template
 from .utils import log_once
 
 if t.TYPE_CHECKING:
@@ -333,7 +334,9 @@ def apply_prompt(
             # Pick the chat template that matches the language of the dataset, if such a
             # template exists
             chat_template: str | None = None
-            if isinstance(tokenizer.chat_template, dict):
+            if hasattr(tokenizer, "chat_template") and isinstance(
+                tokenizer.chat_template, dict
+            ):
                 language_codes = [
                     language.code for language in dataset_config.languages
                 ]
@@ -348,10 +351,9 @@ def apply_prompt(
                         break
 
             texts = [
-                tokenizer.apply_chat_template(
+                apply_chat_template(
                     conversation=messages,
-                    tokenize=False,
-                    add_generation_prompt=True,
+                    tokenizer=tokenizer,
                     chat_template=chat_template,
                 )
                 for messages in messages_list

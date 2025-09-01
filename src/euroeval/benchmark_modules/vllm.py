@@ -16,6 +16,7 @@ import torch
 from huggingface_hub import snapshot_download
 from pydantic import conlist, create_model
 from tqdm.auto import tqdm
+from transformers import MistralCommonTokenizer
 from transformers.models.auto.configuration_auto import AutoConfig
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from urllib3.exceptions import RequestError
@@ -53,11 +54,13 @@ from ..task_group_utils import (
     token_classification,
 )
 from ..tokenization_utils import (
+    apply_chat_template,
     get_bos_token,
     get_end_of_chat_token_ids,
     get_eos_token,
     get_first_label_token_mapping,
     get_pad_token,
+    has_chat_template,
     should_prompts_be_stripped,
 )
 from ..types import ExtractLabelsFunction
@@ -151,7 +154,7 @@ class VLLMModel(HuggingFaceEncoderModel):
         )
 
         self.buffer |= dict(
-            instruction_model=self._tokenizer.chat_template is not None,
+            instruction_model=has_chat_template(tokenizer=self._tokenizer),
             first_label_token_mapping=get_first_label_token_mapping(
                 dataset_config=self.dataset_config,
                 model_config=self.model_config,
@@ -194,7 +197,7 @@ class VLLMModel(HuggingFaceEncoderModel):
         elif self.end_of_reasoning_token is not None:
             return GenerativeType.REASONING
         elif (
-            self._tokenizer.chat_template is not None
+            has_chat_template(tokenizer=self._tokenizer)
             or "instruct" in self.model_config.model_id.lower()
         ):
             return GenerativeType.INSTRUCTION_TUNED
@@ -819,6 +822,16 @@ def load_model_and_tokenizer(
             enable_prefix_caching=False,
             enable_lora=model_config.adapter_base_model_id is not None,
             max_lora_rank=256,
+            # Special arguments in case we are dealing with a Mistral model
+            tokenizer_mode="mistral"
+            if isinstance(tokenizer, MistralCommonTokenizer)
+            else "auto",
+            config_format="mistral"
+            if isinstance(tokenizer, MistralCommonTokenizer)
+            else "auto",
+            load_format="mistral"
+            if isinstance(tokenizer, MistralCommonTokenizer)
+            else "auto",
         )
     except (RuntimeError, ValueError, OSError) as e:
         if "awaiting a review from the repo authors" in str(e):
@@ -910,6 +923,20 @@ def load_tokenizer(
             logger.info(f"Couldn't load tokenizer for {model_id!r}. Retrying.")
             sleep(5)
             continue
+        except KeyError as e:
+            if "mistral" in str(e).lower():
+                tokenizer = MistralCommonTokenizer.from_pretrained(
+                    model_id,
+                    padding_side="left",
+                    truncation_side="left",
+                    model_max_length=model_max_length,
+                    token=token,
+                )
+                break
+            raise InvalidModel(
+                f"Could not load tokenizer for model {model_id!r}. The error was "
+                f"{str(e)}."
+            )
     else:
         raise InvalidModel(
             f"Could not load tokenizer for model {model_id!r} after {num_retries} "
@@ -917,9 +944,10 @@ def load_tokenizer(
         )
 
     # Ensure that BOS, EOS and PAD tokens are set
-    tokenizer.bos_token, tokenizer.bos_token_id = get_bos_token(tokenizer=tokenizer)
-    tokenizer.eos_token, tokenizer.eos_token_id = get_eos_token(tokenizer=tokenizer)
-    tokenizer.pad_token, tokenizer.pad_token_id = get_pad_token(tokenizer=tokenizer)
+    if not isinstance(tokenizer, MistralCommonTokenizer):
+        tokenizer.bos_token, tokenizer.bos_token_id = get_bos_token(tokenizer=tokenizer)
+        tokenizer.eos_token, tokenizer.eos_token_id = get_eos_token(tokenizer=tokenizer)
+        tokenizer.pad_token, tokenizer.pad_token_id = get_pad_token(tokenizer=tokenizer)
 
     return tokenizer
 
@@ -956,11 +984,9 @@ def get_end_of_reasoning_token(
     """
     # Create a prompt to check if the model uses the reasoning tokens
     prompt = "What is your name?"
-    if tokenizer.chat_template is not None:
-        templated_prompt = tokenizer.apply_chat_template(
-            conversation=[dict(role="user", content=prompt)],
-            add_generation_prompt=True,
-            tokenize=False,
+    if has_chat_template(tokenizer=tokenizer):
+        templated_prompt = apply_chat_template(
+            conversation=[dict(role="user", content=prompt)], tokenizer=tokenizer
         )
         assert isinstance(templated_prompt, str)
         prompt = templated_prompt
@@ -1059,11 +1085,9 @@ def get_custom_stop_tokens(
     candidate_stop_tokens = CUSTOM_STOP_TOKENS
 
     prompt = "Hello"
-    if tokenizer.chat_template is not None:
-        templated_prompt = tokenizer.apply_chat_template(
-            conversation=[dict(role="user", content=prompt)],
-            add_generation_prompt=True,
-            tokenize=False,
+    if has_chat_template(tokenizer=tokenizer):
+        templated_prompt = apply_chat_template(
+            conversation=[dict(role="user", content=prompt)], tokenizer=tokenizer
         )
         assert isinstance(templated_prompt, str)
         prompt = templated_prompt
