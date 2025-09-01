@@ -195,7 +195,7 @@ def finetune_single_iteration(
 
     trainer = model.trainer_class(
         model=model.get_pytorch_module(),
-        processing_class=model.get_tokenizer(),
+        processing_class=model.get_tokeniser(),
         args=training_args,
         train_dataset=dataset["train"],
         eval_dataset=dataset["val"],
