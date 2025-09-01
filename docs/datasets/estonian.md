@@ -268,6 +268,9 @@ $ euroeval --model <model-id> --dataset err-news
 
 ### Grammar-et
 
+The dataset is a reorganized and simplified version of the [TartuNLP EstGEC dataset](https://github.com/TartuNLP/estgec)
+dataset. The dataset includes the original sentences and their corrected versions.
+
 The original full dataset consists of 7,937 / 1,000 samples for training and testing, respectively.
 The original dataset consists of 8,937 samples, from which we use 1,024 / 256 / 2,048
 samples for training, validation and testing, respectively. The test split is extended with additional examples
