@@ -14,14 +14,6 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     languages=[ET],
 )
 
-SCALA_ET_CONFIG = DatasetConfig(
-    name="scala-et",
-    pretty_name="the Estonian part of the linguistic acceptability dataset ScaLA",
-    huggingface_id="EuroEval/scala-et",
-    task=LA,
-    languages=[ET],
-)
-
 GRAMMAR_ET_CONFIG = DatasetConfig(
     name="grammar-et",
     pretty_name="the Estonian grammatical correction dataset Grammar-et",
@@ -81,4 +73,16 @@ EUROPEAN_VALUES_ET_CONFIG = DatasetConfig(
     splits=["test"],
     bootstrap_samples=False,
     _instruction_prompt="{text}",
+)
+
+
+### Unofficial datasets ###
+
+SCALA_ET_CONFIG = DatasetConfig(
+    name="scala-et",
+    pretty_name="the Estonian part of the linguistic acceptability dataset ScaLA",
+    huggingface_id="EuroEval/scala-et",
+    task=LA,
+    languages=[ET],
+    unofficial=True,
 )
