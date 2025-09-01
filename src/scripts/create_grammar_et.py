@@ -21,6 +21,9 @@ def main() -> None:
     # start from the official source
     ds = load_dataset("TalTechNLP/grammar_et")
 
+    # remove a small number of examples where the origal was correct
+    ds = ds.filter(lambda row: row["original"] != row["correct"])
+
     # each row contains a correct/incorrect pair
     train_size = 1024 // 2
     val_size = 256 // 2
