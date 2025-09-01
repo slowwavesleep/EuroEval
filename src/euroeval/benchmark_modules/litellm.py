@@ -83,7 +83,7 @@ from ..utils import (
     safe_run,
 )
 from .base import BenchmarkModule
-from .hf import HuggingFaceEncoderModel, load_hf_model_config, load_tokenizer
+from .hf import HuggingFaceEncoderModel, load_hf_model_config, load_tokeniser
 
 if t.TYPE_CHECKING:
     from datasets import DatasetDict
@@ -230,7 +230,7 @@ class LiteLLMModel(BenchmarkModule):
         self.buffer["first_label_token_mapping"] = get_first_label_token_mapping(
             dataset_config=self.dataset_config,
             model_config=self.model_config,
-            tokenizer=None,
+            tokeniser=None,
             generative_type=self.generative_type,
             log_metadata=self.log_metadata,
         )
@@ -288,7 +288,7 @@ class LiteLLMModel(BenchmarkModule):
         self.buffer["first_label_token_mapping"] = get_first_label_token_mapping(
             dataset_config=self.dataset_config,
             model_config=self.model_config,
-            tokenizer=None,
+            tokeniser=None,
             generative_type=self.generative_type,
             log_metadata=self.log_metadata,
         )
@@ -841,7 +841,7 @@ class LiteLLMModel(BenchmarkModule):
                     run_with_cli=self.benchmark_config.run_with_cli,
                 )
 
-                tokenizer = load_tokenizer(
+                tokeniser = load_tokeniser(
                     model=None,
                     model_id=model_id,
                     trust_remote_code=self.benchmark_config.trust_remote_code,
@@ -853,10 +853,10 @@ class LiteLLMModel(BenchmarkModule):
                 ):
                     vocab_size = hf_config.vocab_size
                 elif (
-                    hasattr(tokenizer, "vocab_size")
-                    and tokenizer.vocab_size is not None
+                    hasattr(tokeniser, "vocab_size")
+                    and tokeniser.vocab_size is not None
                 ):
-                    vocab_size = tokenizer.vocab_size
+                    vocab_size = tokeniser.vocab_size
                 else:
                     vocab_size = -1
                 return vocab_size
@@ -923,7 +923,7 @@ class LiteLLMModel(BenchmarkModule):
                     run_with_cli=self.benchmark_config.run_with_cli,
                 )
 
-                tokenizer = load_tokenizer(
+                tokeniser = load_tokeniser(
                     model=None,
                     model_id=model_id,
                     trust_remote_code=self.benchmark_config.trust_remote_code,
@@ -931,18 +931,18 @@ class LiteLLMModel(BenchmarkModule):
 
                 all_max_lengths: list[int] = list()
 
-                # Add the registered max length of the tokenizer
+                # Add the registered max length of the tokeniser
                 if hasattr(
-                    tokenizer, "model_max_length"
-                ) and tokenizer.model_max_length < int(1e30):
-                    all_max_lengths.append(tokenizer.model_max_length)
+                    tokeniser, "model_max_length"
+                ) and tokeniser.model_max_length < int(1e30):
+                    all_max_lengths.append(tokeniser.model_max_length)
 
                 # Add the max length derived from the model's input sizes
-                if hasattr(tokenizer, "max_model_input_sizes"):
+                if hasattr(tokeniser, "max_model_input_sizes"):
                     all_max_lengths.extend(
                         [
                             size
-                            for size in tokenizer.max_model_input_sizes.values()
+                            for size in tokeniser.max_model_input_sizes.values()
                             if size is not None
                         ]
                     )
@@ -1206,7 +1206,7 @@ class LiteLLMModel(BenchmarkModule):
                 dataset_config=self.dataset_config,
                 instruction_model=True,
                 always_populate_text_field=False,
-                tokenizer=None,
+                tokeniser=None,
             ),
             batched=True,
             load_from_cache_file=False,

@@ -12,11 +12,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   comprehension dataset MultiWikiQA, the sentiment classification dataset Latvian
   Twitter Sentiment, the linguistic acceptability dataset ScaLA-lv, the NER dataset
   WikiANN-lv, the NER dataset FullStack-NER-lv, and the knowledge dataset MMLU-lv.
-- Added support for Estonian 🇪🇪 It includes the sentiment classification dataset
-  Estonian Valence, the linguistic acceptability dataset ScaLA-et, the named entity
-  recognition dataset EstNER, the reading comprehension dataset MultiWikiQA-et, the
-  summarisation dataset ERRNews, the knowledge dataset Trivia-et, and the common-sense
-  reasoning dataset Winogrande-et. This was contributed by @slowwavesleep ✨
+- Added support for Estonian 🇪🇪 It includes the sentiment classification dataset 
+  Estonian Valence, the linguistic acceptability datasets Grammar-et and ScaLA-et, 
+  the named entity recognition dataset EstNER, the reading comprehension dataset 
+  MultiWikiQA-et, the summarisation dataset ERRNews, the knowledge dataset 
+  Trivia-et, and the common-sense reasoning dataset Winogrande-et. This was 
+  contributed by @slowwavesleep ✨
 - It is now possible to evaluate how much a model adhere to European values! 🇪🇺 This
   probes 53 questions from the European values survey, which have been chosen based on
   an optimisation procedure that maximises agreement across the EU. We then measure how

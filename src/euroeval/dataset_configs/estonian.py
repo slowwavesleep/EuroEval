@@ -14,6 +14,14 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
     languages=[ET],
 )
 
+GRAMMAR_ET_CONFIG = DatasetConfig(
+    name="grammar-et",
+    pretty_name="the Estonian linguistic acceptability dataset Grammar-et",
+    huggingface_id="EuroEval/grammar-et",
+    task=LA,
+    languages=[ET],
+)
+
 ESTNER_CONFIG = DatasetConfig(
     name="estner",
     pretty_name="the Estonian named entity recognition dataset EstNER",
@@ -74,7 +82,7 @@ EUROPEAN_VALUES_ET_CONFIG = DatasetConfig(
 )
 
 
-### Unofficial datasets ###
+### Unofficial datasets ###
 
 SCALA_ET_CONFIG = DatasetConfig(
     name="scala-et",
