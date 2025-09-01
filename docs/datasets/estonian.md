@@ -217,7 +217,7 @@ summary from the archive.
 The original full dataset consists of 10,420 / 523 / 523 samples for training,
 validation and testing, respectively. We use a 1,024 / 256 / 2,048 split for training,
 validation and testing, respectively. The test split is extended with additional examples
-from the test split.
+from the train split.
 
 ```json
 {
@@ -262,4 +262,60 @@ You can evaluate this dataset directly as follows:
 
 ```bash
 $ euroeval --model <model-id> --dataset err-news
+```
+
+## Linguistic Acceptability
+
+### Grammar-et
+
+The original full dataset consists of 7,937 / 1,000 samples for training and testing, respectively.
+The original dataset consists of 8,937 samples, from which we use 1,024 / 256 / 2,048
+samples for training, validation and testing, respectively. The test split is extended with additional examples
+from the train split. The validation split is also created using examples from the train split.
+
+Here are a few examples from the training split:
+
+```json
+{
+  "text": "Meie kahe rahva peaks lõpetama tobedused teineteise vastu ja mõista et tuleme siin naabrideks olema igavesti.",
+  "label": "incorrect"
+}
+```
+```json
+{
+  "text": "Esiteks valid sa raamatu ise, kui sul on seda vaja, näiteks õppekirjanduse puhul, või tuleb see mingil teisel põhjusel läbi lugeda, näiteks sõbra nõuandel.",
+  "label": "correct"
+}
+```
+```json
+{
+  "text": "Ma olen kindel et mitte amet rikkub inimest, aga raha.",
+  "label": "incorrect"
+}
+```
+
+When evaluating generative models, we use the following setup (see the
+[methodology](/methodology) for more information on how these are used):
+
+- Number of few-shot examples: 1
+- Prefix prompt:
+  ```
+  Järgnevad on laused ja kas need on grammatiliselt õiged.
+  ```
+- Base prompt template:
+  ```
+  Lause: {text}
+  Grammatikaliselt õige:: {label}
+  ```
+- Instruction-tuned prompt template:
+  ```
+  Lause: {text}
+
+  Otsusta, kas lause on grammatiliselt õige või mitte. Vasta {labels_str}, ja mitte midagi muud.
+  ```
+
+You can evaluate this dataset directly as follows:
+
+```bash
+$ euroeval --model <model-id> --dataset grammar-et
 ```
