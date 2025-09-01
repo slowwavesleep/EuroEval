@@ -16,7 +16,7 @@ ESTONIAN_VALENCE_CONFIG = DatasetConfig(
 
 GRAMMAR_ET_CONFIG = DatasetConfig(
     name="grammar-et",
-    pretty_name="the Estonian grammatical correction dataset Grammar-et",
+    pretty_name="the Estonian linguistic acceptability dataset Grammar-et",
     huggingface_id="EuroEval/grammar-et",
     task=LA,
     languages=[ET],
