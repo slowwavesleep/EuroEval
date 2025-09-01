@@ -6,11 +6,27 @@ from ..tasks import KNOW, LA, NER, RC, SENT
 
 ### Official datasets ###
 
+LATVIAN_TWITTER_SENTIMENT_CONFIG = DatasetConfig(
+    name="latvian-twitter-sentiment",
+    pretty_name="the truncated version of the Latvian sentiment classification dataset",
+    huggingface_id="EuroEval/latvian-twitter-sentiment-mini",
+    task=SENT,
+    languages=[LV],
+)
+
 SCALA_LV_CONFIG = DatasetConfig(
     name="scala-lv",
     pretty_name="the Latvian part of the linguistic acceptability dataset ScaLA",
     huggingface_id="EuroEval/scala-lv",
     task=LA,
+    languages=[LV],
+)
+
+FULLSTACK_NER_LV_CONFIG = DatasetConfig(
+    name="fullstack-ner-lv",
+    pretty_name="the truncated version of the FullStack NER dataset",
+    huggingface_id="EuroEval/fullstack-ner-lv-mini",
+    task=NER,
     languages=[LV],
 )
 
@@ -23,21 +39,7 @@ MULTI_WIKI_QA_LV_CONFIG = DatasetConfig(
     languages=[LV],
 )
 
-LATVIAN_TWITTER_SENTIMENT_CONFIG = DatasetConfig(
-    name="latvian-twitter-sentiment",
-    pretty_name="the truncated version of the Latvian sentiment classification dataset",
-    huggingface_id="EuroEval/latvian-twitter-sentiment-mini",
-    task=SENT,
-    languages=[LV],
-)
-
-FULLSTACK_NER_LV_CONFIG = DatasetConfig(
-    name="fullstack-ner-lv",
-    pretty_name="the truncated version of the FullStack NER dataset",
-    huggingface_id="EuroEval/fullstack-ner-lv-mini",
-    task=NER,
-    languages=[LV],
-)
+# TODO: Missing summarisation dataset
 
 MMLU_LV_CONFIG = DatasetConfig(
     name="mmlu-lv",
@@ -47,6 +49,8 @@ MMLU_LV_CONFIG = DatasetConfig(
     task=KNOW,
     languages=[LV],
 )
+
+# TODO: Missing common-sense reasoning dataset
 
 
 ### Unofficial datasets ###
