@@ -18,6 +18,7 @@ from euroeval.tasks import SENT, SPEED, get_all_tasks
 def pytest_configure() -> None:
     """Set a global flag when `pytest` is being run."""
     setattr(sys, "_called_from_test", True)
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Ensure only one GPU is used in tests
 
 
 def pytest_unconfigure() -> None:

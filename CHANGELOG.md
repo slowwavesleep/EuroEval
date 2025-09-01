@@ -8,22 +8,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Added support for Latvian 🇱🇻! This includes the Latvian part of the reading comprehension
-  dataset MultiWikiQA, the sentiment classification dataset Latvian Twitter Sentiment,
-  the linguistic acceptability dataset ScaLA-lv, the NER dataset WikiANN-lv, the
-  NER dataset FullStack-NER-lv, and the knowledge dataset MMLU-lv.
+- Added support for Latvian 🇱🇻! This includes the Latvian part of the reading
+  comprehension dataset MultiWikiQA, the sentiment classification dataset Latvian
+  Twitter Sentiment, the linguistic acceptability dataset ScaLA-lv, the NER dataset
+  WikiANN-lv, the NER dataset FullStack-NER-lv, and the knowledge dataset MMLU-lv.
+- Added support for Estonian 🇪🇪 It includes the sentiment classification dataset
+  Estonian Valence, the linguistic acceptability dataset ScaLA-et, the named entity
+  recognition dataset EstNER, the reading comprehension dataset MultiWikiQA-et, the
+  summarisation dataset ERRNews, the knowledge dataset Trivia-et, and the common-sense
+  reasoning dataset Winogrande-et. This was contributed by @slowwavesleep ✨
 - It is now possible to evaluate how much a model adhere to European values! 🇪🇺 This
   probes 53 questions from the European values survey, which have been chosen based on
   an optimisation procedure that maximises agreement across the EU. We then measure how
   well the model's answers align with the distribution of answers across the EU, using a
   tree-based kernel density estimation. This can only be used zero-shot, and only with
   instruction-based decoder models (including reasoning models).
-- Added support for Estonian 🇪🇪 It currently includes the gold-standard sentiment
-  classification dataset Estonian Valence, the gold-standard named entity recognition
-  dataset EstNER, the gold-standard summarisation dataset ERRNews and the translated
-  common-sense reasoning dataset Winogrande-et which includes manually translated and
-  localised test split, as well as mahine-translated train and validation splits. This was
-  contributed by @slowwavesleep ✨
 
 ### Changed
 - When evaluating classification tasks, we now force the model to output one of the
