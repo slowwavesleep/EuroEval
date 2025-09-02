@@ -81,9 +81,6 @@ if t.TYPE_CHECKING or importlib.util.find_spec("vllm") is not None:
     from vllm.lora.request import LoRARequest
     from vllm.sampling_params import GuidedDecodingParams
 
-if t.TYPE_CHECKING or importlib.util.find_spec("ray") is not None:
-    import ray
-
 if t.TYPE_CHECKING:
     from datasets import DatasetDict
     from transformers.tokenization_utils import PreTrainedTokenizer
@@ -120,10 +117,7 @@ class VLLMModel(HuggingFaceEncoderModel):
             log_metadata:
                 Whether to log the model and dataset metadata.
         """
-        if (
-            importlib.util.find_spec("vllm") is None
-            or importlib.util.find_spec("ray") is None
-        ):
+        if importlib.util.find_spec("vllm") is None:
             raise NeedsExtraInstalled(extra="generative")
 
         model, tokeniser = load_model_and_tokeniser(
@@ -809,9 +803,7 @@ def load_model_and_tokeniser(
             trust_remote_code=benchmark_config.trust_remote_code,
             revision=revision,
             seed=4242,
-            distributed_executor_backend=(
-                "ray" if torch.cuda.device_count() > 1 else "mp"
-            ),
+            distributed_executor_backend="mp",
             tensor_parallel_size=torch.cuda.device_count(),
             disable_custom_all_reduce=True,
             quantization=quantization,
@@ -923,7 +915,7 @@ def load_tokeniser(
             logger.info(f"Couldn't load tokeniser for {model_id!r}. Retrying.")
             sleep(5)
             continue
-        except KeyError as e:
+        except (KeyError, ValueError) as e:
             if "mistral" in str(e).lower():
                 tokeniser = MistralCommonTokenizer.from_pretrained(
                     model_id,
@@ -957,12 +949,8 @@ def clear_vllm() -> None:
     with contextlib.suppress(ValueError):
         destroy_model_parallel()
         destroy_distributed_environment()
-    if ray.is_initialized():
-        ray.shutdown()
     with contextlib.suppress(AssertionError):
         torch.distributed.destroy_process_group()
-    if ray.is_initialized():
-        ray.shutdown()
     clear_memory()
 
 

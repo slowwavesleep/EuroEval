@@ -330,28 +330,33 @@ def get_end_of_chat_token_ids(tokeniser: "PreTrainedTokenizer") -> list[int] | N
 
     Returns:
         The token IDs used to end chats, or None if the tokeniser does not have a chat
-        template.
-
-    Raises:
-        ValueError:
-            If the end-of-chat token could not be located.
+        template or if no end-of-chat token could be found.
     """
     if not has_chat_template(tokeniser=tokeniser):
         return None
 
     user_message: dict[str, str] = dict(role="user", content="X")
-    token_ids: list[int] = tokeniser.apply_chat_template(conversation=[user_message])  # type: ignore[assignment]
+    token_ids = apply_chat_template(
+        conversation=[user_message],
+        tokeniser=tokeniser,
+        tokenize=True,
+        add_generation_prompt=False,
+    )
+    assert isinstance(token_ids, list)
 
     for idx, token in enumerate(tokeniser.convert_ids_to_tokens(token_ids)):
         if "X" in token:
             x_token_index = idx
             break
     else:
-        raise ValueError("Could not locate the end-of-chat token for the model.")
+        logger.debug("Could not locate the end-of-chat token for the model.")
+        return None
 
     end_of_chat_tokens = token_ids[x_token_index + 1 :]
     if len(end_of_chat_tokens) == 0:
-        raise ValueError("Could not locate the end-of-chat token for the model.")
+        logger.debug("Could not locate the end-of-chat token for the model.")
+        return None
+
     log_once(
         f"Detected end-of-chat token IDs as {end_of_chat_tokens}, corresponding to "
         f"tokens {tokeniser.convert_ids_to_tokens(end_of_chat_tokens)}.",
@@ -517,13 +522,15 @@ def has_chat_template(tokeniser: "PreTrainedTokenizer") -> bool:
     elif isinstance(tokeniser, MistralCommonTokenizer):
         log_once(
             "The tokeniser is a Mistral tokeniser, so assuming that the model is "
-            "instruction tuned."
+            "instruction tuned.",
+            level=logging.DEBUG,
         )
         return True
     else:
         log_once(
             "We cannot find a chat template for the tokeniser, so assuming that the "
-            "model isn't instruction tuned."
+            "model isn't instruction tuned.",
+            level=logging.DEBUG,
         )
         return False
 
@@ -532,6 +539,7 @@ def apply_chat_template(
     conversation: list[dict[str, str]],
     tokeniser: "PreTrainedTokenizer",
     tokenize: bool = False,
+    add_generation_prompt: bool = True,
     **transformers_tokeniser_kwargs,
 ) -> str | list[int]:
     """Apply the chat template to a prompt.
@@ -544,6 +552,10 @@ def apply_chat_template(
         tokenize:
             Whether to tokenize the resulting prompt, returning a list of token IDs
             instead of a string.
+        add_generation_prompt:
+            Whether to add a generation prompt at the end of the conversation. This is
+            only relevant for regular Hugging Face tokenisers, as Mistral tokenisers
+            always add a generation prompt.
         **transformers_tokeniser_kwargs:
             Additional keyword arguments to pass to the tokeniser, in case the tokeniser
             is a regular Hugging Face tokeniser.
@@ -567,7 +579,7 @@ def apply_chat_template(
     else:
         templated_prompt = tokeniser.apply_chat_template(
             conversation=conversation,
-            add_generation_prompt=True,
+            add_generation_prompt=add_generation_prompt,
             tokenize=tokenize,
             **transformers_tokeniser_kwargs,
         )
