@@ -293,8 +293,10 @@ def load_model_and_tokeniser(
             verbose=False,
             trust_remote_code=benchmark_config.trust_remote_code,
         )
-    except (JSONDecodeError, OSError):
-        raise InvalidModel(f"Could not load tokeniser for model {real_model_id!r}.")
+    except (JSONDecodeError, OSError) as e:
+        raise InvalidModel(
+            f"Could not load tokeniser for model {real_model_id!r}."
+        ) from e
 
     model, tokeniser = align_model_and_tokeniser(
         model=model,

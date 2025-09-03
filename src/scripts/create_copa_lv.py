@@ -111,7 +111,7 @@ def load_and_prepare_dataframe(url: str) -> pd.DataFrame:
         row.instruction.replace("\n", " ").strip() + "\n"
         f"{choices_word}:\n"
         "a. " + row.option_a.replace("\n", " ").strip() + "\n"
-        "b. " + row.option_b.replace("\n", " ").strip() + "\n"
+        "b. " + row.option_b.replace("\n", " ").strip()
         for _, row in df.iterrows()
     ]
 

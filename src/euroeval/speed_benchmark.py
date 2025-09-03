@@ -116,7 +116,7 @@ def benchmark_speed_single_iteration(
         )
 
     except (RuntimeError, ValueError, IndexError) as e:
-        raise InvalidBenchmark(f"Speed benchmark failed with error: {e!r}")
+        raise InvalidBenchmark(f"Speed benchmark failed with error: {e!r}") from e
 
     return dict(
         test_speed=gpt2_tokens_per_second, test_speed_short=gpt2_tokens_per_second_short

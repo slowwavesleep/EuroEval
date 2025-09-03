@@ -473,7 +473,7 @@ class LiteLLMModel(BenchmarkModule):
                     f"{thinking_budget:,} tokens, which is within the limit of "
                     f"{REASONING_MAX_TOKENS:,} tokens. This should not happen. The "
                     f"error message was: {error_msg}."
-                )
+                ) from error
             log_once(
                 f"The model {model_id!r} can at most use {thinking_budget:,} tokens "
                 "for reasoning, which is less than the default of "
@@ -512,7 +512,7 @@ class LiteLLMModel(BenchmarkModule):
                 "There are too many file descriptors running. See the current "
                 "value by running `ulimit -n`. Try increasing it by running "
                 "`ulimit -n <new-value>` and try again."
-            )
+            ) from error
         elif isinstance(
             error, (Timeout, ServiceUnavailableError, InternalServerError, SystemError)
         ):
@@ -528,41 +528,41 @@ class LiteLLMModel(BenchmarkModule):
                 string=error.message,
             )
             if unsupported_param_match is None:
-                raise InvalidModel(error.message)
+                raise InvalidModel(error.message) from error
             else:
                 unsupported_param = unsupported_param_match.group(0)
                 raise InvalidModel(
                     f"The model {model_id!r} does not support the parameter "
                     f"{unsupported_param!r}. Try again without this parameter. "
                     "Skipping this model."
-                )
+                ) from error
         elif isinstance(error, (APIConnectionError, OSError)):
             raise InvalidBenchmark(
                 f"Encountered {type(error)} during generation: {error}."
-            )
+            ) from error
 
         if isinstance(error, NotFoundError):
             raise InvalidModel(
                 f"The model {model_id!r} was not found. Please check the model ID "
                 "and try again."
-            )
+            ) from error
 
         if isinstance(error, RateLimitError):
             raise InvalidModel(
                 f"You have encountered your rate limit for model {model_id!r}. "
                 "Skipping."
-            )
+            ) from error
 
         if isinstance(error, AuthenticationError):
             raise NeedsAdditionalArgument(
                 cli_argument="--api-key",
                 script_argument="api_key=<your-api-key>",
                 run_with_cli=self.benchmark_config.run_with_cli,
-            )
+            ) from error
 
         raise InvalidBenchmark(
             f"Failed to generate text. The error message was: {error}"
-        )
+        ) from error
 
     async def _generate_async(
         self,
@@ -1425,11 +1425,11 @@ def try_download_ollama_model(model_id: str) -> bool:
             for model_obj in ollama.list().models
             if model_obj.model is not None
         ]
-    except ConnectionError:
+    except ConnectionError as e:
         raise InvalidModel(
             "Ollama does not seem to be running, so we cannot evaluate the model "
             f"{model_id!r}. Please make sure that Ollama is running and try again."
-        )
+        ) from e
 
     ollama_model_id = "/".join(model_id.split("/")[1:])
     if ollama_model_id not in downloaded_ollama_models:
@@ -1459,12 +1459,12 @@ def try_download_ollama_model(model_id: str) -> bool:
                         raise InvalidModel(
                             f"Failed to download Ollama model {ollama_model_id}. "
                             f"The error message was: {inner_e}"
-                        )
+                        ) from inner_e
             else:
                 raise InvalidModel(
                     f"Failed to download Ollama model {ollama_model_id}. "
                     f"The error message was: {e}"
-                )
+                ) from e
 
         # Download the model
         with tqdm(

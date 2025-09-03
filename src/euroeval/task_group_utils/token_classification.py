@@ -359,9 +359,9 @@ def tokenize_and_align_labels(
                 label = labels[word_id]
                 try:
                     label_id = label2id[label.lower()]
-                except KeyError:
+                except KeyError as e:
                     msg = f"The label {label} was not found in the model's config."
-                    raise InvalidBenchmark(msg)
+                    raise InvalidBenchmark(msg) from e
                 label_ids.append(label_id)
 
             # For the other tokens in a word, we set the label to -100

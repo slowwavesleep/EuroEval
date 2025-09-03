@@ -361,12 +361,12 @@ class HuggingFaceEncoderModel(BenchmarkModule):
                         self._model.config.label2id[lbl.lower()]
                         for lbl in examples["label"]
                     ]
-                except KeyError:
+                except KeyError as e:
                     raise InvalidBenchmark(
                         f"One of the labels in the dataset, "
                         f"{examples['label'].lower()}, does not occur in the "
                         f"label2id dictionary {self._model.config.label2id}."
-                    )
+                    ) from e
             return examples
 
         def tokenise(examples: dict) -> "BatchEncoding":
@@ -644,11 +644,13 @@ def load_model_and_tokeniser(
                 model_kwargs["ignore_mismatched_sizes"] = True
                 continue
             else:
-                raise InvalidModel(str(e))
-        except (TimeoutError, RequestError):
+                raise InvalidModel(str(e)) from e
+        except (TimeoutError, RequestError) as e:
             attempts_left -= 1
             if attempts_left == 0:
-                raise InvalidModel("The model could not be loaded after 5 attempts.")
+                raise InvalidModel(
+                    "The model could not be loaded after 5 attempts."
+                ) from e
             logger.info(f"Couldn't load the model {model_id!r}. Retrying.")
             sleep(5)
             continue
@@ -656,16 +658,16 @@ def load_model_and_tokeniser(
             if "checkpoint seems to be incorrect" in str(e):
                 raise InvalidModel(
                     f"The model {model_id!r} has an incorrect checkpoint."
-                )
+                ) from e
             if "trust_remote_code" in str(e):
                 raise InvalidModel(
                     f"Loading the model {model_id!r} needs to trust remote code. "
                     "If you trust the suppliers of this model, then you can enable "
                     "this by setting the `--trust-remote-code` flag."
-                )
+                ) from e
             raise InvalidModel(
                 f"The model {model_id!r} could not be loaded. The error was {e!r}."
-            )
+            ) from e
 
     if isinstance(model_or_tuple, tuple):
         model = model_or_tuple[0]
@@ -906,8 +908,10 @@ def load_tokeniser(
         try:
             tokeniser = AutoTokenizer.from_pretrained(model_id, **loading_kwargs)
             break
-        except (JSONDecodeError, OSError, TypeError):
-            raise InvalidModel(f"Could not load tokeniser for model {model_id!r}.")
+        except (JSONDecodeError, OSError, TypeError) as e:
+            raise InvalidModel(
+                f"Could not load tokeniser for model {model_id!r}."
+            ) from e
         except (TimeoutError, RequestError):
             logger.info(f"Couldn't load tokeniser for {model_id!r}. Retrying.")
             sleep(5)
@@ -1010,7 +1014,7 @@ def load_hf_model_config(
             raise InvalidModel(
                 f"The model config for the model {model_id!r} could not be "
                 f"loaded, as the key {key!r} was not found in the config."
-            )
+            ) from e
         except (OSError, GatedRepoError) as e:
             # TEMP: When the model is gated then we cannot set cache dir, for some
             # reason (since transformers v4.38.2, still a problem in v4.48.0). This
@@ -1021,7 +1025,7 @@ def load_hf_model_config(
             raise InvalidModel(
                 f"Couldn't load model config for {model_id!r}. The error was "
                 f"{e!r}. Skipping"
-            )
+            ) from e
         except (TimeoutError, RequestError):
             logger.info(f"Couldn't load model config for {model_id!r}. Retrying.")
             sleep(5)
@@ -1031,17 +1035,17 @@ def load_hf_model_config(
                 raise InvalidModel(
                     f"The model {model_id!r} is awaiting a review from the repository "
                     "authors. Please try again later."
-                )
+                ) from e
             if "trust_remote_code" in str(e):
                 raise NeedsAdditionalArgument(
                     cli_argument="--trust-remote-code",
                     script_argument="trust_remote_code=True",
                     run_with_cli=run_with_cli,
-                )
+                ) from e
             raise InvalidModel(
                 f"The config for the model {model_id!r} could not be loaded. The "
                 f"error was {e!r}."
-            )
+            ) from e
 
 
 def setup_model_for_question_answering(model: "PreTrainedModel") -> "PreTrainedModel":

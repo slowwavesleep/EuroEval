@@ -481,7 +481,7 @@ class VLLMModel(HuggingFaceEncoderModel):
                 else:
                     raise InvalidBenchmark(
                         f"An error occurred during vLLM generation: {str(e)}"
-                    )
+                    ) from e
         else:
             raise InvalidBenchmark(
                 f"Could not generate sequences after {num_attempts} attempts."
@@ -830,16 +830,16 @@ def load_model_and_tokeniser(
             raise InvalidModel(
                 f"The model {model_id!r} is awaiting a review from the repository "
                 "authors. Please try again later."
-            )
+            ) from e
         elif "trust_remote_code" in str(e):
             raise InvalidModel(
                 f"Loading the model {model_id!r} needs to trust remote code. "
                 "If you trust the suppliers of this model, then you can enable "
                 "this by setting the `--trust-remote-code` flag."
-            )
+            ) from e
         raise InvalidModel(
             f"The model {model_id!r} could not be loaded. The error was {e!r}."
-        )
+        ) from e
 
     model.config = hf_model_config
 
@@ -905,7 +905,7 @@ def load_tokeniser(
                 raise InvalidModel(
                     f"Could not load tokeniser for model {model_id!r}. The error was "
                     f"{str(e)}."
-                )
+                ) from e
             logger.debug(
                 f"Could not load tokeniser for {model_id!r}. Falling back to "
                 f"{adapter_base_model_id!r}."
@@ -928,7 +928,7 @@ def load_tokeniser(
             raise InvalidModel(
                 f"Could not load tokeniser for model {model_id!r}. The error was "
                 f"{str(e)}."
-            )
+            ) from e
     else:
         raise InvalidModel(
             f"Could not load tokeniser for model {model_id!r} after {num_retries} "
@@ -999,7 +999,7 @@ def get_end_of_reasoning_token(
             f"The model {model_id!r} did not generate any beginning-of-reasoning "
             "tokens in the prompt or the completion. Assuming the model is not "
             "a reasoning model.",
-            level=logging.INFO,
+            level=logging.DEBUG,
         )
         return None
 
@@ -1025,7 +1025,7 @@ def get_end_of_reasoning_token(
             "the beginning-of-reasoning tokens "
             f"{[bor_token for bor_token, _ in bor_reasoning_matches]!r}. "
             "This is probably not correct, so please report this issue.",
-            level=logging.INFO,
+            level=logging.WARNING,
         )
         return None
 
@@ -1035,14 +1035,14 @@ def get_end_of_reasoning_token(
             f"model {model_id!r}. Using {eor_reasoning_matches[0]!r} as "
             "the reasoning token. If this is not the correct reasoning token, "
             "please report this issue.",
-            level=logging.INFO,
+            level=logging.WARNING,
         )
 
     bor_token, eor_token = eor_reasoning_matches[0]
     log_once(
         f"Detected beginning-of-reasoning token {bor_token!r} and end-of-reasoning "
         f"token {eor_token!r} for model {model_id!r}.",
-        level=logging.INFO,
+        level=logging.DEBUG,
     )
 
     return eor_token
