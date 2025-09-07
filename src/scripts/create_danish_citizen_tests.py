@@ -11,7 +11,6 @@
 
 """Create the Danish Citizen Tests dataset and upload it to the HF Hub."""
 
-import os
 import warnings
 
 import pandas as pd
@@ -20,6 +19,8 @@ from dotenv import load_dotenv
 from huggingface_hub import HfApi
 from pandas.errors import SettingWithCopyWarning
 from requests import HTTPError
+
+from euroeval.utils import get_hf_token
 
 load_dotenv()
 
@@ -34,7 +35,7 @@ def main() -> None:
 
     # Download the dataset
     dataset = load_dataset(
-        path=repo_id, split="train", token=os.getenv("HUGGINGFACE_API_KEY")
+        path=repo_id, split="train", token=get_hf_token(api_key=None)
     )
     assert isinstance(dataset, Dataset)
 
