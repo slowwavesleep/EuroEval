@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   total number of benchmarks to run. This only affects logging.
 - We now correctly skip evaluations if the model's generative type (base decoder,
   instruction-tuned decoder, reasoning decoder) is not allowed for the given dataset.
+- Correct the the titles for Estonian and Finnic scatter plots.
 
 
 ## [v16.2.2] - 2025-09-15
