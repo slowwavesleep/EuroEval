@@ -194,11 +194,12 @@ INSTRUCTION_FOLLOWING = Task(
     name="instruction-following",
     task_group=TaskGroup.TEXT_TO_TEXT,
     template_dict=INSTRUCTION_FOLLOWING_TEMPLATES,
-    metrics=...,
+    metrics=[m.prompt_level_strict_acc_metric, m.inst_level_strict_acc_metric],
     default_num_few_shot_examples=0,
     default_max_generated_tokens=2048,
     default_labels=None,
     default_allowed_model_types=[ModelType.GENERATIVE],
     default_allowed_generative_types=[GenerativeType.INSTRUCTION_TUNED, GenerativeType.REASONING],
+    requires_zero_shot=True,
     uses_logprobs=False,
 )

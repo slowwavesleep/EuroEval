@@ -2,7 +2,7 @@
 
 from ..data_models import DatasetConfig
 from ..languages import ENGLISH
-from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
+from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM, INSTRUCTION_FOLLOWING
 
 ### Official datasets ###
 
@@ -128,5 +128,14 @@ WINOGRANDE_CONFIG = DatasetConfig(
     task=COMMON_SENSE,
     languages=[ENGLISH],
     _labels=["a", "b"],
+    unofficial=True,
+)
+
+INSTRUCTION_FOLLOWING_CONFIG = DatasetConfig(
+    name="ifeval-en",
+    pretty_name="IFEval-en",
+    source="EuroEval/ifeval-et",
+    task=INSTRUCTION_FOLLOWING,
+    languages=[ENGLISH],
     unofficial=True,
 )

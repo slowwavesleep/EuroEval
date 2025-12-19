@@ -38,8 +38,14 @@ if t.TYPE_CHECKING:
 INSTRUCTION_FOLLOWING_TEMPLATES: dict["Language", PromptConfig] = {
     ENGLISH: PromptConfig(
         default_prompt_prefix="",
-        default_prompt_template="",
-        default_instruction_prompt="",
+        default_prompt_template="{text}",
+        default_instruction_prompt="{text}",
+        default_prompt_label_mapping="auto",
+    ),
+    ESTONIAN: PromptConfig(
+        default_prompt_prefix="",
+        default_prompt_template="{text}",
+        default_instruction_prompt="{text}",
         default_prompt_label_mapping="auto",
     ),
 }
