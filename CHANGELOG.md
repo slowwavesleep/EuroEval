@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- Added support for Albanian 🇦🇱! This includes the sentiment classification dataset
+  MMS-sq, the linguistic acceptability dataset ScaLA-sq, the named entity recognition
+  dataset WikiANN-sq, the reading comprehension dataset MultiWikiQA-sq, the
+  summarisation dataset LR-Sum-sq, the knowledge dataset Global-MMLU-Lite-sq,
+  and the common-sense reasoning dataset Winogrande-sq.
+- Added the Dutch common sense reasoning dataset COPA-NL, which is part of the
+Dutch [DUMB benchmark](https://github.com/wietsedv/dumb)
+
+## [v16.9.0] - 2025-12-16
+
+### Added
+
+- Added the Swedish factual knowledge dataset SwedishFacts, which is based on the
+  [liu-nlp/swedish-facts-v1](https://huggingface.co/datasets/liu-nlp/swedish-facts-v1)
+  dataset. This was contributed by @oliverkinch ✨
+
+### Changed
+
+- When benchmarking generative models, we now use their generation parameters as
+  specified in the `generation_config.json` file in the model repository on the Hugging
+  Face Hub, if it exists. We log this to the user if verbose mode is enabled.
+
 ### Fixed
 
 - When a model has registered the number of parameters wrongly within their safetensors
@@ -18,6 +42,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Removed mentions of `hf_transfer` and the associated environment variable
   `HF_HUB_ENABLE_HF_TRANSFER`, since this has been removed from the `transformers`
   library now.
+- Marked the `PleIAs/Pleias-3b-Preview` as requiring the `TRITON_ATTN` backend over the
+  default `FLASHINFER` backend, as the model architecture is currently not supported by
+  the default backend.
 
 ## [v16.8.0] - 2025-11-25
 
@@ -2747,8 +2774,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Deprecated
 
-- Deprecated support for evaluating finetuned models, as the package was primarily used to
-  benchmark pretrained models anyway, and the change in datasets means that many
+- Deprecated support for evaluating finetuned models, as the package was primarily used
+  to benchmark pretrained models anyway, and the change in datasets means that many
   finetuned models would have been trained on (part of) the test sets, resulting in
   artificially large scores. For evaluation of finetuned models, please check out the
   `aiai_eval` Python package instead (under development).

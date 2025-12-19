@@ -1,6 +1,6 @@
 [project]
 name = "EuroEval"
-version = "16.8.0.dev"
+version = "16.9.0.dev"
 description = "The robust European language model benchmark."
 readme = "README.md"
 authors = [
@@ -101,7 +101,6 @@ dev = [
     "types-simplejson>=3.2.0.2025032",
     "debugpy>=1.8.13",
     "pytest-socket>=0.7.0",
-    "pytest-rerunfailures>=16.1",
     "pytest-depends>=1.0.1",
     "pyrefly>=0.43.1",
 ]
@@ -169,6 +168,7 @@ convention = "google"
 
 [tool.pyrefly.errors]
 missing-import = false
+missing-attribute = false
 
 [tool.pytest.ini_options]
 minversion = "7.0"
