@@ -5,7 +5,7 @@
 #     "huggingface-hub==0.34.4",
 # ]
 # ///
-"""Create the Estonian IFEval instruction-following dataset and upload to HF Hub."""
+"""Create the English IFEval instruction-following dataset and upload to HF Hub."""
 
 from datasets import DatasetDict, load_dataset
 from huggingface_hub import HfApi
@@ -13,8 +13,8 @@ from huggingface_hub import HfApi
 
 def main() -> None:
     """Create the Estonian IFEval dataset and upload to HF Hub."""
-    source_repo_id = "tartuNLP/ifeval_et"
-    target_repo_id = "EuroEval/ifeval-et"
+    source_repo_id = "tartuNLP/ifeval_en"
+    target_repo_id = "EuroEval/ifeval-en"
 
     ds = load_dataset(source_repo_id)
 
