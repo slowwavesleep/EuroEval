@@ -6,6 +6,7 @@ from .data_models import Task
 from .enums import GenerativeType, ModelType, TaskGroup
 from .prompt_templates import (
     CLASSIFICATION_TEMPLATES,
+    INSTRUCTION_FOLLOWING_TEMPLATES,
     LA_TEMPLATES,
     MULTIPLE_CHOICE_TEMPLATES,
     NER_TEMPLATES,
@@ -13,7 +14,6 @@ from .prompt_templates import (
     SENT_TEMPLATES,
     SUMM_TEMPLATES,
     TOKEN_CLASSIFICATION_TEMPLATES,
-    INSTRUCTION_FOLLOWING_TEMPLATES,
 )
 
 LA = Task(
@@ -199,7 +199,10 @@ INSTRUCTION_FOLLOWING = Task(
     default_max_generated_tokens=2048,
     default_labels=None,
     default_allowed_model_types=[ModelType.GENERATIVE],
-    default_allowed_generative_types=[GenerativeType.INSTRUCTION_TUNED, GenerativeType.REASONING],
+    default_allowed_generative_types=[
+        GenerativeType.INSTRUCTION_TUNED,
+        GenerativeType.REASONING,
+    ],
     requires_zero_shot=True,
     uses_logprobs=False,
 )

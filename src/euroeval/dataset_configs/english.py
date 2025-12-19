@@ -2,7 +2,18 @@
 
 from ..data_models import DatasetConfig
 from ..languages import ENGLISH
-from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM, INSTRUCTION_FOLLOWING
+from ..tasks import (
+    COMMON_SENSE,
+    EUROPEAN_VALUES,
+    INSTRUCTION_FOLLOWING,
+    KNOW,
+    LA,
+    MCRC,
+    NER,
+    RC,
+    SENT,
+    SUMM,
+)
 
 ### Official datasets ###
 

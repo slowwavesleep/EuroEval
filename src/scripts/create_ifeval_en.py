@@ -7,7 +7,7 @@
 # ///
 """Create the English IFEval instruction-following dataset and upload to HF Hub."""
 
-from datasets import DatasetDict, load_dataset
+from datasets import load_dataset
 from huggingface_hub import HfApi
 
 

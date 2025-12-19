@@ -21,10 +21,7 @@ class OutputExample:
     follow_instruction_list: list[bool]
 
 
-def test_instruction_following_strict(
-    inp,
-    response,
-):
+def test_instruction_following_strict(inp, response):
     """Tests response to see if instructions are followed."""
     instruction_list = inp.instruction_id_list
     is_following_list = []
@@ -54,10 +51,7 @@ def test_instruction_following_strict(
     )
 
 
-def test_instruction_following_loose(
-    inp,
-    response,
-):
+def test_instruction_following_loose(inp, response):
     """Tests response for an upper bound for following instructions."""
     r = response.split("\n")
     response_remove_first = "\n".join(r[1:]).strip()

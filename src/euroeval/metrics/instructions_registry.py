@@ -14,8 +14,33 @@
 
 """Registry of all instructions."""
 
-from .instructions import KeywordChecker, KeywordFrequencyChecker, ForbiddenWords, LetterFrequencyChecker, ResponseLanguageChecker, NumberOfSentences, ParagraphChecker, NumberOfWords, ParagraphFirstWordCheck, PlaceholderChecker, PostscriptChecker, BulletListChecker, ConstrainedResponseChecker, HighlightSectionChecker, SectionChecker, JsonFormat, TitleChecker, TwoResponsesChecker, RepeatPromptThenAnswer, EndChecker, CapitalWordFrequencyChecker, CapitalLettersEnglishChecker, LowercaseLettersEnglishChecker, CommaChecker, QuotationChecker
-
+from .instructions import (
+    BulletListChecker,
+    CapitalLettersEnglishChecker,
+    CapitalWordFrequencyChecker,
+    CommaChecker,
+    ConstrainedResponseChecker,
+    EndChecker,
+    ForbiddenWords,
+    HighlightSectionChecker,
+    JsonFormat,
+    KeywordChecker,
+    KeywordFrequencyChecker,
+    LetterFrequencyChecker,
+    LowercaseLettersEnglishChecker,
+    NumberOfSentences,
+    NumberOfWords,
+    ParagraphChecker,
+    ParagraphFirstWordCheck,
+    PlaceholderChecker,
+    PostscriptChecker,
+    QuotationChecker,
+    RepeatPromptThenAnswer,
+    ResponseLanguageChecker,
+    SectionChecker,
+    TitleChecker,
+    TwoResponsesChecker,
+)
 
 _KEYWORD = "keywords:"
 

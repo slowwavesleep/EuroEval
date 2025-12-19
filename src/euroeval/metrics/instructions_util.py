@@ -24,7 +24,6 @@ import immutabledict
 import nltk
 from packaging.version import parse as parse_version
 
-
 # Downloading 'punkt' with nltk<3.9 has a remote code vuln.
 # see  https://github.com/EleutherAI/lm-evaluation-harness/issues/2210
 # and https://github.com/nltk/nltk/issues/3266
@@ -33,8 +32,8 @@ NLTK_MIN_VERSION = "3.9.1"
 RANK = os.environ.get("LOCAL_RANK", "0")
 
 
-def download_nltk_resources():
-    """Download 'punkt' if not already installed"""
+def download_nltk_resources() -> None:
+    """Download 'punkt' if not already installed."""
     assert (nltk_version := parse_version(version("nltk"))) >= parse_version(
         NLTK_MIN_VERSION
     ), (
@@ -1640,9 +1639,7 @@ def split_into_sentences(text):
     text = re.sub(_WEBSITES, "<prd>\\1", text)
     text = re.sub(_DIGITS + "[.]" + _DIGITS, "\\1<prd>\\2", text)
     text = re.sub(
-        _MULTIPLE_DOTS,
-        lambda match: "<prd>" * len(match.group(0)) + "<stop>",
-        text,
+        _MULTIPLE_DOTS, lambda match: "<prd>" * len(match.group(0)) + "<stop>", text
     )
     if "Ph.D" in text:
         text = text.replace("Ph.D.", "Ph<prd>D<prd>")

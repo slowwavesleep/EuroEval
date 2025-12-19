@@ -3,34 +3,7 @@
 import typing as t
 
 from ..data_models import PromptConfig
-from ..languages import (
-    BOSNIAN,
-    CATALAN,
-    CZECH,
-    DANISH,
-    DUTCH,
-    ENGLISH,
-    ESTONIAN,
-    FINNISH,
-    FRENCH,
-    GERMAN,
-    GREEK,
-    HUNGARIAN,
-    ICELANDIC,
-    ITALIAN,
-    LATVIAN,
-    LITHUANIAN,
-    NORWEGIAN,
-    NORWEGIAN_BOKMÅL,
-    NORWEGIAN_NYNORSK,
-    POLISH,
-    PORTUGUESE,
-    ROMANIAN,
-    SERBIAN,
-    SPANISH,
-    SWEDISH,
-    UKRAINIAN,
-)
+from ..languages import ENGLISH, ESTONIAN
 
 if t.TYPE_CHECKING:
     from ..languages import Language
