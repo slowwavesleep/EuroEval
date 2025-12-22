@@ -40,8 +40,8 @@ class IFEvalMetric(Metric):
         self,
         name: str,
         pretty_name: str,
-        strict: bool = True,
-        prompt_level: bool = True,
+        strict: bool,
+        prompt_level: bool,
         postprocessing_fn: t.Callable[[float], tuple[float, str]] | None = None,
     ) -> None:
         """Initialise the IFEval metric.
