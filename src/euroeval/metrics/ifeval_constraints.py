@@ -4,6 +4,11 @@ import collections.abc as c
 import typing as t
 
 from .base import Metric
+from .utils import (
+    InputExample,
+    test_instruction_following_loose,
+    test_instruction_following_strict,
+)
 
 if t.TYPE_CHECKING:
     from datasets.arrow_dataset import Dataset
@@ -86,12 +91,6 @@ class IFEvalMetric(Metric):
         Returns:
             The calculated metric score, or None if the score should be ignored.
         """
-        from .utils import (
-            InputExample,
-            test_instruction_following_loose,
-            test_instruction_following_strict,
-        )
-
         test_fn = (
             test_instruction_following_strict
             if self.strict
