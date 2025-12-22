@@ -108,8 +108,8 @@ class HuggingFaceMetric(Metric):
         Args:
             predictions:
                 The model predictions.
-
         references:
+
                 The ground truth references.
             dataset:
                 The dataset used for evaluation. This is only used in case any
