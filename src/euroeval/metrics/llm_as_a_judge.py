@@ -90,8 +90,7 @@ class LLMAsAJudgeMetric(Metric):
         Args:
             predictions:
                 The model predictions.
-
-        References:
+            references:
                 The ground truth references.
             dataset:
                 The dataset used for evaluation. This is only used in case any

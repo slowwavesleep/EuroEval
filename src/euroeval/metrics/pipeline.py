@@ -106,8 +106,7 @@ class PipelineMetric(Metric):
         Args:
             predictions:
                 The model predictions.
-
-        References:
+            references:
                 Not used, but required for consistency with the Metric interface.
             dataset:
                 The dataset used for evaluation. This is only used in case any

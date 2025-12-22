@@ -73,8 +73,7 @@ class IFEvalMetric(Metric):
         Args:
             predictions:
                 The model predictions (generated responses).
-
-        References:
+            references:
                 Not used for IFEval - instructions come from the dataset.
             dataset:
                 The dataset containing instruction metadata (instruction_id_list,
