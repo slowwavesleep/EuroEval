@@ -20,7 +20,6 @@ def main() -> None:
 
     ds = ds.select_columns(["key", "prompt", "instruction_id_list", "kwargs"])
 
-    # Rename 'prompt' to 'text' to match EuroEval's TEXT_TO_TEXT format
     ds = ds.rename_column("prompt", "text")
 
     # Add empty 'target_text' column for TEXT_TO_TEXT compatibility
