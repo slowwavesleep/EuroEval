@@ -22,12 +22,11 @@ if t.TYPE_CHECKING:
 
     from ..data_models import BenchmarkConfig, DatasetConfig
 
-# Make langdetect deterministic
+# make langdetect deterministic
 DetectorFactory.seed = 0
 
 logger = logging.getLogger(__name__)
 
-# NLTK resource download
 NLTK_MIN_VERSION = "3.9.1"
 _RANK = os.environ.get("LOCAL_RANK", "0")
 
@@ -56,11 +55,11 @@ def get_sentence_tokenizer() -> nltk.tokenize.PunktSentenceTokenizer:
     return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
 
 
-# Note: All checker functions accept **kwargs to absorb extra fields from the
+# all checker functions accept **kwargs to absorb extra fields from the
 # dataset's kwargs dict, which contains all possible parameters for all instructions.
 
 
-def check_keyword_existence(response: str, *, keywords: list[str], **kwargs) -> bool:
+def check_keyword_existence(response: str, *, keywords: list[str], **_) -> bool:
     """Check that all keywords exist in the response."""
     if not keywords:
         raise ValueError("keywords must be provided")
@@ -83,7 +82,7 @@ def check_keyword_frequency(
 
 
 def check_forbidden_words(
-    response: str, *, forbidden_words: list[str], **kwargs
+    response: str, *, forbidden_words: list[str], **_
 ) -> bool:
     """Check that forbidden words don't appear."""
     if not forbidden_words:
@@ -117,7 +116,7 @@ def check_number_sentences(
     return actual >= num_sentences
 
 
-def check_number_paragraphs(response: str, *, num_paragraphs: int, **kwargs) -> bool:
+def check_number_paragraphs(response: str, *, num_paragraphs: int, **_) -> bool:
     """Check number of paragraphs (separated by ***)."""
     paragraphs = re.split(r"\s?\*\*\*\s?", response)
     count = len(paragraphs)
@@ -131,7 +130,7 @@ def check_number_paragraphs(response: str, *, num_paragraphs: int, **kwargs) -> 
 
 
 def check_number_words(
-    response: str, *, num_words: int, relation: str, **kwargs
+    response: str, *, num_words: int, relation: str, **_
 ) -> bool:
     """Check number of words."""
     tokenizer = nltk.tokenize.RegexpTokenizer(r"\w+")
@@ -158,7 +157,7 @@ def check_nth_paragraph_first_word(
     if not paragraph:
         return False
 
-    # Extract first word, stripping punctuation
+    # extract first word, stripping punctuation
     word = paragraph.split()[0].strip().lstrip("'\"")
     actual_first = ""
     for char in word:
@@ -170,14 +169,14 @@ def check_nth_paragraph_first_word(
 
 
 def check_number_placeholders(
-    response: str, *, num_placeholders: int, **kwargs
+    response: str, *, num_placeholders: int, **_
 ) -> bool:
     """Check minimum number of [placeholder] brackets."""
     placeholders = re.findall(r"\[.*?\]", response)
     return len(placeholders) >= num_placeholders
 
 
-def check_postscript(response: str, *, postscript_marker: str, **kwargs) -> bool:
+def check_postscript(response: str, *, postscript_marker: str, **_) -> bool:
     """Check for postscript marker."""
     response = response.lower()
     if postscript_marker == "P.P.S":
@@ -189,14 +188,14 @@ def check_postscript(response: str, *, postscript_marker: str, **kwargs) -> bool
     return bool(re.findall(pattern, response, flags=re.MULTILINE))
 
 
-def check_number_bullet_lists(response: str, *, num_bullets: int, **kwargs) -> bool:
+def check_number_bullet_lists(response: str, *, num_bullets: int, **_) -> bool:
     """Check exact number of bullet points."""
     bullets1 = re.findall(r"^\s*\*[^\*].*$", response, flags=re.MULTILINE)
     bullets2 = re.findall(r"^\s*-.*$", response, flags=re.MULTILINE)
     return len(bullets1) + len(bullets2) == num_bullets
 
 
-def check_constrained_response(response: str, **kwargs) -> bool:
+def check_constrained_response(response: str, **_) -> bool:
     """Check response contains one of the constrained options."""
     options = ("My answer is yes.", "My answer is no.", "My answer is maybe.")
     return any(opt in response.strip() for opt in options)
@@ -225,7 +224,7 @@ def check_multiple_sections(
     return len(sections) - 1 >= num_sections
 
 
-def check_json_format(response: str, **kwargs) -> bool:
+def check_json_format(response: str, **_) -> bool:
     """Check response is valid JSON."""
     value = (
         response.strip()
@@ -243,7 +242,7 @@ def check_json_format(response: str, **kwargs) -> bool:
         return False
 
 
-def check_title(response: str, **kwargs) -> bool:
+def check_title(response: str, **_) -> bool:
     """Check for <<title>> format."""
     for title in re.findall(r"<<[^\n]+>>", response):
         if title.lstrip("<").rstrip(">").strip():
@@ -251,7 +250,7 @@ def check_title(response: str, **kwargs) -> bool:
     return False
 
 
-def check_two_responses(response: str, **kwargs) -> bool:
+def check_two_responses(response: str, **_) -> bool:
     """Check for two different responses separated by ******."""
     parts = response.split("******")
     valid = []
@@ -264,14 +263,14 @@ def check_two_responses(response: str, **kwargs) -> bool:
     return len(valid) == 2 and valid[0].strip() != valid[1].strip()
 
 
-def check_repeat_prompt(response: str, *, prompt_to_repeat: str, **kwargs) -> bool:
+def check_repeat_prompt(response: str, *, prompt_to_repeat: str, **_) -> bool:
     """Check response starts with the prompt."""
     if not prompt_to_repeat:
         raise ValueError("prompt_to_repeat must be provided")
     return response.strip().lower().startswith(prompt_to_repeat.strip().lower())
 
 
-def check_end_phrase(response: str, *, end_phrase: str, **kwargs) -> bool:
+def check_end_phrase(response: str, *, end_phrase: str, **_) -> bool:
     """Check response ends with exact phrase."""
     return response.strip().strip('"').lower().endswith(end_phrase.strip().lower())
 
@@ -287,7 +286,7 @@ def check_capital_word_frequency(
     return count >= capital_frequency
 
 
-def check_english_capital(response: str, **kwargs) -> bool:
+def check_english_capital(response: str, **_) -> bool:
     """Check response is English and all caps."""
     try:
         return response.isupper() and langdetect.detect(response) == "en"
@@ -295,7 +294,7 @@ def check_english_capital(response: str, **kwargs) -> bool:
         return True
 
 
-def check_english_lowercase(response: str, **kwargs) -> bool:
+def check_english_lowercase(response: str, **_) -> bool:
     """Check response is English and all lowercase."""
     try:
         return response.islower() and langdetect.detect(response) == "en"
@@ -303,18 +302,18 @@ def check_english_lowercase(response: str, **kwargs) -> bool:
         return True
 
 
-def check_no_comma(response: str, **kwargs) -> bool:
+def check_no_comma(response: str, **_) -> bool:
     """Check response has no commas."""
     return "," not in response
 
 
-def check_quotation(response: str, **kwargs) -> bool:
+def check_quotation(response: str, **_) -> bool:
     """Check response is wrapped in double quotes."""
     response = response.strip()
     return len(response) > 1 and response[0] == '"' and response[-1] == '"'
 
 
-INSTRUCTION_CHECKERS = {
+instruction_checkers = {
     "keywords:existence": check_keyword_existence,
     "keywords:frequency": check_keyword_frequency,
     "keywords:forbidden_words": check_forbidden_words,
@@ -341,7 +340,7 @@ INSTRUCTION_CHECKERS = {
     "startend:quotation": check_quotation,
 }
 
-SKIPPED_INSTRUCTIONS = {"language:response_language"}
+skipped_instructions = {"language:response_language"}
 
 
 def check_instruction_following(
@@ -350,11 +349,11 @@ def check_instruction_following(
     """Check if response follows each instruction."""
     results = []
     for instruction_id, kwargs in zip(instruction_id_list, kwargs_list):
-        if instruction_id in SKIPPED_INSTRUCTIONS:
+        if instruction_id in skipped_instructions:
             logger.warning(f"Skipping unsupported instruction: {instruction_id}")
             continue
 
-        checker = INSTRUCTION_CHECKERS[instruction_id]
+        checker = instruction_checkers[instruction_id]
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
         is_following = bool(response.strip() and checker(response, **kwargs))
@@ -369,7 +368,7 @@ class IFEvalInstructionAccuracy(Metric):
     def __init__(
         self,
         name: str = "inst_level_strict_acc",
-        pretty_name: str = "Instruction-level Strict Accuracy",
+        pretty_name: str = "Instruction-Level Strict Accuracy",
         postprocessing_fn: t.Callable[[float], tuple[float, str]] | None = None,
     ) -> None:
         """Initialize the metric."""
