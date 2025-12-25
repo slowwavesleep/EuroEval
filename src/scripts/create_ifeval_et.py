@@ -17,15 +17,9 @@ def main() -> None:
     target_repo_id = "EuroEval/ifeval-et"
 
     ds = load_dataset(source_repo_id)
-
-    ds = ds.select_columns(["key", "prompt", "instruction_id_list", "kwargs"])
-
     ds = ds.rename_column("prompt", "text")
-
-    # Add empty 'target_text' column for TEXT_TO_TEXT compatibility
-    # (IFEval doesn't use traditional references - the metric extracts
-    # constraints from instruction_id_list and kwargs instead)
-    ds = ds.map(lambda row: {"target_text": ""})
+    ds = ds.map(lambda row: {"target_text": {"instruction_id_list": row["instruction_id_list"], "kwargs": row["kwargs"]}})
+    ds = ds.select_columns(["key", "text", "target_text"])
 
     HfApi().delete_repo(target_repo_id, repo_type="dataset", missing_ok=True)
 
