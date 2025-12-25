@@ -16,9 +16,16 @@ def main() -> None:
     source_repo_id = "tartuNLP/ifeval_en"
     target_repo_id = "EuroEval/ifeval-en"
 
-    ds = load_dataset(source_repo_id)
+    ds = load_dataset(source_repo_id, split="test")
     ds = ds.rename_column("prompt", "text")
-    ds = ds.map(lambda row: {"target_text": {"instruction_id_list": row["instruction_id_list"], "kwargs": row["kwargs"]}})
+    ds = ds.map(
+        lambda row: {
+            "target_text": {
+                "instruction_id_list": row["instruction_id_list"],
+                "kwargs": row["kwargs"],
+            }
+        }
+    )
     ds = ds.select_columns(["key", "text", "target_text"])
 
     HfApi().delete_repo(target_repo_id, repo_type="dataset", missing_ok=True)

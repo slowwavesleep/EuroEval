@@ -81,9 +81,7 @@ def check_keyword_frequency(
     return actual >= frequency
 
 
-def check_forbidden_words(
-    response: str, *, forbidden_words: list[str], **_
-) -> bool:
+def check_forbidden_words(response: str, *, forbidden_words: list[str], **_) -> bool:
     """Check that forbidden words don't appear."""
     if not forbidden_words:
         raise ValueError("forbidden_words must be provided")
@@ -129,9 +127,7 @@ def check_number_paragraphs(response: str, *, num_paragraphs: int, **_) -> bool:
     return count == num_paragraphs
 
 
-def check_number_words(
-    response: str, *, num_words: int, relation: str, **_
-) -> bool:
+def check_number_words(response: str, *, num_words: int, relation: str, **_) -> bool:
     """Check number of words."""
     tokenizer = nltk.tokenize.RegexpTokenizer(r"\w+")
     actual = len(tokenizer.tokenize(response))
@@ -168,9 +164,7 @@ def check_nth_paragraph_first_word(
     return count == num_paragraphs and actual_first == first_word.lower()
 
 
-def check_number_placeholders(
-    response: str, *, num_placeholders: int, **_
-) -> bool:
+def check_number_placeholders(response: str, *, num_placeholders: int, **_) -> bool:
     """Check minimum number of [placeholder] brackets."""
     placeholders = re.findall(r"\[.*?\]", response)
     return len(placeholders) >= num_placeholders
@@ -386,10 +380,10 @@ class IFEvalInstructionAccuracy(Metric):
     ) -> float | None:
         """Calculate instruction-level accuracy."""
         all_results: list[bool] = []
-        for i, pred in enumerate(predictions):
+        for pred, ref in zip(predictions, references):
             results = check_instruction_following(
-                instruction_id_list=dataset[i]["instruction_id_list"],
-                kwargs_list=dataset[i]["kwargs"],
+                instruction_id_list=ref["instruction_id_list"],
+                kwargs_list=ref["kwargs"],
                 response=str(pred),
             )
             all_results.extend(results)
