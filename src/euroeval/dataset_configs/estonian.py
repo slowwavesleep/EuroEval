@@ -96,7 +96,6 @@ IFEVAL_ET_CONFIG = DatasetConfig(
     source="EuroEval/ifeval-et",
     task=INSTRUCTION_FOLLOWING,
     languages=[ESTONIAN],
-    splits=["test"],
     bootstrap_samples=True,
 )
 
