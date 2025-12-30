@@ -97,7 +97,7 @@ IFEVAL_ET_CONFIG = DatasetConfig(
     task=INSTRUCTION_FOLLOWING,
     languages=[ESTONIAN],
     splits=["test"],
-    bootstrap_samples=False,
+    bootstrap_samples=True,
 )
 
 ### Unofficial datasets ###
