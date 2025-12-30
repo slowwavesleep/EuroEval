@@ -148,5 +148,5 @@ INSTRUCTION_FOLLOWING_CONFIG = DatasetConfig(
     source="EuroEval/ifeval-en",
     task=INSTRUCTION_FOLLOWING,
     languages=[ENGLISH],
-    unofficial=True,
+    bootstrap_samples=True,
 )
