@@ -322,7 +322,7 @@ instruction_checkers = {
     "startend:quotation": check_quotation,
 }
 
-skipped_instructions = {"language:response_language"}
+SKIPPED_INSTRUCTIONS = {"language:response_language"}
 
 
 def check_instruction_following(
