@@ -27,10 +27,6 @@ DetectorFactory.seed = 0
 
 logger = logging.getLogger(__name__)
 
-NLTK_MIN_VERSION = "3.9.1"
-_RANK = os.environ.get("LOCAL_RANK", "0")
-
-
 nltk.download("punkt_tab", quiet=True)
 
 
