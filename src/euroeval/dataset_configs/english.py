@@ -142,7 +142,7 @@ WINOGRANDE_CONFIG = DatasetConfig(
     unofficial=True,
 )
 
-INSTRUCTION_FOLLOWING_CONFIG = DatasetConfig(
+IFEVAL_EN_CONFIG = DatasetConfig(
     name="ifeval-en",
     pretty_name="IFEval-en",
     source="EuroEval/ifeval-en",
