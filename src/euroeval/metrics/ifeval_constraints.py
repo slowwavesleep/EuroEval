@@ -31,19 +31,7 @@ NLTK_MIN_VERSION = "3.9.1"
 _RANK = os.environ.get("LOCAL_RANK", "0")
 
 
-def download_nltk_resources() -> None:
-    """Download 'punkt' if not already installed."""
-    assert (nltk_version := parse_version(version("nltk"))) >= parse_version(
-        NLTK_MIN_VERSION
-    ), (
-        f"`nltk` version {nltk_version} is not >= {NLTK_MIN_VERSION}. "
-        "Please update `nltk` before proceeding."
-    )
-    try:
-        nltk.data.find("tokenizers/punkt_tab")
-    except LookupError:
-        if _RANK == "0":
-            nltk.download("punkt_tab")
+nltk.download("punkt_tab", quiet=True)
 
 
 download_nltk_resources()
