@@ -201,7 +201,8 @@ def check_multiple_sections(
     response: str, *, section_spliter: str, num_sections: int, **_
 ) -> bool:
     """Check for Section X markers."""
-    pattern = r"\s?" + section_spliter + r"\s?\d+\s?"
+    section_splitter = section_spliter
+    pattern = r"\s?" + section_splitter + r"\s?\d+\s?"
     sections = re.split(pattern, response)
     return len(sections) - 1 >= num_sections
 
