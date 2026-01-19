@@ -37,7 +37,7 @@ nltk.download("punkt_tab", quiet=True)
 download_nltk_resources()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_sentence_tokenizer() -> nltk.tokenize.PunktSentenceTokenizer:
     """Get the cached NLTK sentence tokenizer."""
     return nltk.data.load("nltk:tokenizers/punkt/english.pickle")
