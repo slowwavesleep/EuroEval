@@ -97,7 +97,7 @@ def stratified_split_with_retry(
 
 
 def main() -> None:
-    """Create the English IFEval dataset and upload to HF Hub."""
+    """Create the IFEval datasets and upload to HF Hub."""
     for lang in LANGUAGES:
         source_repo_id, target_repo_id = LANGUAGES[lang]
 
