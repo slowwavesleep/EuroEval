@@ -13,8 +13,12 @@ from datasets import Dataset, DatasetDict, load_dataset
 from huggingface_hub import HfApi
 
 LANGUAGES = {
-    "en": ("tartuNLP/ifeval_en", "EuroEval/ifeval-en"),  # replaces constraints requesting specific language in response
-    "et": ("tartuNLP/ifeval_et", "EuroEval/ifeval-et")
+    "en": (
+        # replaces constraints requesting specific language in response
+        "tartuNLP/ifeval_en",
+        "EuroEval/ifeval-en",
+    ),
+    "et": ("tartuNLP/ifeval_et", "EuroEval/ifeval-et"),
 }
 
 

@@ -2,18 +2,14 @@
 
 import collections
 import collections.abc as c
-import functools
 import json
 import logging
-import os
 import re
 import typing as t
-from importlib.metadata import version
 
 import langdetect
 import nltk
 from langdetect import DetectorFactory
-from packaging.version import parse as parse_version
 
 from .base import Metric
 
@@ -73,7 +69,8 @@ def check_forbidden_words(response: str, *, forbidden_words: list[str], **_) -> 
 
     Args:
         response: The response string to check.
-        forbidden_words: List of words that must not appear (case-insensitive, whole-word match).
+        forbidden_words: List of words that must not appear
+        (case-insensitive, whole-word match).
 
     Returns:
         True if none of the forbidden words are found, False otherwise.
@@ -155,7 +152,9 @@ def check_number_paragraphs(response: str, *, num_paragraphs: int, **_) -> bool:
     return count == num_paragraphs
 
 
-def check_number_words(response: str, *, num_words: int, relation: Relation, **_) -> bool:
+def check_number_words(
+    response: str, *, num_words: int, relation: Relation, **_
+) -> bool:
     """Check number of words.
 
     Args:
@@ -174,7 +173,12 @@ def check_number_words(response: str, *, num_words: int, relation: Relation, **_
 
 
 def check_nth_paragraph_first_word(
-    response: str, *, num_paragraphs: int, nth_paragraph: int, first_word: str | None, **_
+    response: str,
+    *,
+    num_paragraphs: int,
+    nth_paragraph: int,
+    first_word: str | None,
+    **_,
 ) -> bool:
     """Check paragraph count and first word of nth paragraph.
 
@@ -538,8 +542,9 @@ def check_instruction_following(
 
     Args:
         instruction_id_list: List of instruction IDs corresponding to checker keys
-            in instruction_checkers.
-        kwargs_list: List of parameter dicts, one per instruction, passed to each checker.
+        in instruction_checkers.
+        kwargs_list: List of parameter dicts, one per instruction,
+        passed to each checker.
         response: The response string to evaluate.
 
     Returns:
@@ -548,7 +553,7 @@ def check_instruction_following(
 
     Raises:
         KeyError: If an instruction_id is not found in instruction_checkers and is
-            not in SKIPPED_INSTRUCTIONS.
+        not in SKIPPED_INSTRUCTIONS.
     """
     results = []
     for instruction_id, kwargs in zip(instruction_id_list, kwargs_list):
