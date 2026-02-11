@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 nltk.download("punkt_tab", quiet=True)
 
+Relation = t.Literal["less than", "at least"]
 
 # all checker functions accept **kwargs to absorb extra fields from the
 # dataset's kwargs dict, which contains all possible parameters for all instructions.
@@ -56,7 +57,7 @@ def check_keyword_existence(response: str, *, keywords: list[str], **_) -> bool:
 
 
 def check_keyword_frequency(
-    response: str, *, keyword: str, frequency: int, relation: str, **_
+    response: str, *, keyword: str, frequency: int, relation: Relation, **_
 ) -> bool:
     """Check keyword appears with required frequency."""
     if not keyword:
@@ -89,7 +90,7 @@ def check_forbidden_words(response: str, *, forbidden_words: list[str], **_) -> 
 
 
 def check_letter_frequency(
-    response: str, *, letter: str, let_frequency: int, let_relation: str, **_
+    response: str, *, letter: str, let_frequency: int, let_relation: Relation, **_
 ) -> bool:
     """Check letter appears with required frequency.
 
@@ -114,7 +115,7 @@ def check_letter_frequency(
 
 
 def check_number_sentences(
-    response: str, *, num_sentences: int, relation: str, **_
+    response: str, *, num_sentences: int, relation: Relation, **_
 ) -> bool:
     """Check number of sentences.
 
@@ -154,7 +155,7 @@ def check_number_paragraphs(response: str, *, num_paragraphs: int, **_) -> bool:
     return count == num_paragraphs
 
 
-def check_number_words(response: str, *, num_words: int, relation: str, **_) -> bool:
+def check_number_words(response: str, *, num_words: int, relation: Relation, **_) -> bool:
     """Check number of words.
 
     Args:
@@ -418,7 +419,7 @@ def check_end_phrase(response: str, *, end_phrase: str, **_) -> bool:
 
 
 def check_capital_word_frequency(
-    response: str, *, capital_frequency: int, capital_relation: str, **_
+    response: str, *, capital_frequency: int, capital_relation: Relation, **_
 ) -> bool:
     """Check frequency of ALL CAPS words.
 
