@@ -328,7 +328,7 @@ def check_instruction_following(
     """Check if response follows each instruction."""
     results = []
     for instruction_id, kwargs in zip(instruction_id_list, kwargs_list):
-        if instruction_id in skipped_instructions:
+        if instruction_id in SKIPPED_INSTRUCTIONS:
             logger.warning(f"Skipping unsupported instruction: {instruction_id}")
             continue
 
