@@ -12,6 +12,11 @@ import random
 from datasets import Dataset, DatasetDict, load_dataset
 from huggingface_hub import HfApi
 
+LANGUAGES = {
+    "en": ("tartuNLP/ifeval_en", "EuroEval/ifeval-en"),  # replaces constraints requesting specific language in response
+    "et": ("tartuNLP/ifeval_et", "EuroEval/ifeval-et")
+}
+
 
 def stratified_split(
     dataset: Dataset, label_key: str, test_size: float, seed: int
@@ -93,28 +98,28 @@ def stratified_split_with_retry(
 
 def main() -> None:
     """Create the English IFEval dataset and upload to HF Hub."""
-    source_repo_id = "tartuNLP/ifeval_en"
-    target_repo_id = "EuroEval/ifeval-en"
+    for lang in LANGUAGES:
+        source_repo_id, target_repo_id = LANGUAGES[lang]
 
-    ds = load_dataset(source_repo_id, split="test")
+        ds = load_dataset(source_repo_id, split="test")
 
-    split_ds = stratified_split_with_retry(
-        ds, label_key="instruction_id_list", test_size=0.75, seed=42
-    )
+        split_ds = stratified_split_with_retry(
+            ds, label_key="instruction_id_list", test_size=0.75, seed=42
+        )
 
-    def transform(row: dict) -> dict:
-        return {
-            "text": row["prompt"],
-            "target_text": {
-                "instruction_id_list": row["instruction_id_list"],
-                "kwargs": row["kwargs"],
-            },
-        }
+        def transform(row: dict) -> dict:
+            return {
+                "text": row["prompt"],
+                "target_text": {
+                    "instruction_id_list": row["instruction_id_list"],
+                    "kwargs": row["kwargs"],
+                },
+            }
 
-    split_ds = split_ds.map(transform).select_columns(["text", "target_text"])
+        split_ds = split_ds.map(transform).select_columns(["text", "target_text"])
 
-    HfApi().delete_repo(target_repo_id, repo_type="dataset", missing_ok=True)
-    split_ds.push_to_hub(target_repo_id, private=True)
+        HfApi().delete_repo(target_repo_id, repo_type="dataset", missing_ok=True)
+        split_ds.push_to_hub(target_repo_id, private=True)
 
 
 if __name__ == "__main__":
