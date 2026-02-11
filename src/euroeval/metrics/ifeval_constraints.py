@@ -174,7 +174,7 @@ def check_number_words(response: str, *, num_words: int, relation: Relation, **_
 
 
 def check_nth_paragraph_first_word(
-    response: str, *, num_paragraphs: int, nth_paragraph: int, first_word: str, **_
+    response: str, *, num_paragraphs: int, nth_paragraph: int, first_word: str | None, **_
 ) -> bool:
     """Check paragraph count and first word of nth paragraph.
 
@@ -190,9 +190,13 @@ def check_nth_paragraph_first_word(
 
     Raises:
         ValueError: If first_word is None.
+        ValueError: If nth_paragraph is None.
     """
     if first_word is None:
         raise ValueError("first_word must be provided")
+
+    if not nth_paragraph < num_paragraphs:
+        raise ValueError("nth_paragraph must be less than num_paragraphs")
 
     paragraphs = re.split(r"\n\n", response)
     count = sum(1 for p in paragraphs if p.strip())
@@ -258,7 +262,7 @@ def check_number_bullet_lists(response: str, *, num_bullets: int, **_) -> bool:
 
     Returns:
         True if the response contains exactly num_bullets bullet points,
-        where bullet points are lines starting with * or -, False otherwise.
+        where bullet points are lines starting with ``*`` or ``-``, False otherwise.
     """
     bullets1 = re.findall(r"^\s*\*[^\*].*$", response, flags=re.MULTILINE)
     bullets2 = re.findall(r"^\s*-.*$", response, flags=re.MULTILINE)
