@@ -5,7 +5,7 @@
 #     "huggingface-hub==0.34.4",
 # ]
 # ///
-"""Create the English IFEval instruction-following dataset and upload to HF Hub."""
+"""Create the IFEval instruction-following datasets and upload to HF Hub."""
 
 import random
 
