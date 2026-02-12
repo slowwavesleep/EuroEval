@@ -1,5 +1,6 @@
 """Tests for the `benchmark_config_factory` module."""
 
+import os
 from pathlib import Path
 from typing import Generator
 
@@ -14,9 +15,8 @@ from euroeval.benchmark_config_factory import (
 )
 from euroeval.data_models import DatasetConfig, Language
 from euroeval.dataset_configs import get_all_dataset_configs
-from euroeval.dataset_configs.danish import ANGRY_TWEETS_CONFIG, SCALA_DA_CONFIG
+from euroeval.dataset_configs.danish import MULTI_WIKI_QA_DA_CONFIG, SCALA_DA_CONFIG
 from euroeval.enums import Device
-from euroeval.exceptions import InvalidBenchmark
 from euroeval.languages import (
     DANISH,
     ENGLISH,
@@ -30,11 +30,18 @@ from euroeval.tasks import LA
 
 @pytest.fixture(scope="module")
 def all_official_dataset_configs() -> Generator[list[DatasetConfig], None, None]:
-    """Fixture for all official dataset configurations."""
+    """Fixture for all official dataset configurations.
+
+    Yields:
+        A list of all official dataset configurations.
+    """
     yield [
         cfg
         for cfg in get_all_dataset_configs(
-            custom_datasets_file=Path("custom_datasets.py")
+            custom_datasets_file=Path("custom_datasets.py"),
+            dataset_ids=[],
+            api_key=os.getenv("HF_TOKEN"),
+            cache_dir=Path(".euroeval_cache"),
         ).values()
         if not cfg.unofficial
     ]
@@ -42,11 +49,18 @@ def all_official_dataset_configs() -> Generator[list[DatasetConfig], None, None]
 
 @pytest.fixture(scope="module")
 def all_official_la_dataset_configs() -> Generator[list[DatasetConfig], None, None]:
-    """Fixture for all linguistic acceptability dataset configurations."""
+    """Fixture for all linguistic acceptability dataset configurations.
+
+    Yields:
+        A list of all linguistic acceptability dataset configurations.
+    """
     yield [
         cfg
         for cfg in get_all_dataset_configs(
-            custom_datasets_file=Path("custom_datasets.py")
+            custom_datasets_file=Path("custom_datasets.py"),
+            dataset_ids=[],
+            api_key=os.getenv("HF_TOKEN"),
+            cache_dir=Path(".euroeval_cache"),
         ).values()
         if LA == cfg.task and not cfg.unofficial
     ]
@@ -140,7 +154,7 @@ def test_prepare_languages(
         (None, "scala-da", list(get_all_languages().values()), [SCALA_DA_CONFIG]),
         (
             "linguistic-acceptability",
-            ["scala-da", "angry-tweets"],
+            ["scala-da", "multi-wiki-qa-da"],
             list(get_all_languages().values()),
             [SCALA_DA_CONFIG],
         ),
@@ -151,22 +165,22 @@ def test_prepare_languages(
             [SCALA_DA_CONFIG],
         ),
         (
-            ["linguistic-acceptability", "sentiment-classification"],
-            ["scala-da", "angry-tweets", "scandiqa-da"],
+            ["linguistic-acceptability", "reading-comprehension"],
+            ["scala-da", "multi-wiki-qa-da", "nordjylland-news"],
             list(get_all_languages().values()),
-            [SCALA_DA_CONFIG, ANGRY_TWEETS_CONFIG],
+            [SCALA_DA_CONFIG, MULTI_WIKI_QA_DA_CONFIG],
         ),
         (
-            ["linguistic-acceptability", "sentiment-classification"],
-            ["scala-da", "angry-tweets", "scandiqa-sv"],
+            ["linguistic-acceptability", "reading-comprehension"],
+            ["scala-da", "multi-wiki-qa-da", "multi-wiki-qa-sv"],
             [DANISH],
-            [SCALA_DA_CONFIG, ANGRY_TWEETS_CONFIG],
+            [SCALA_DA_CONFIG, MULTI_WIKI_QA_DA_CONFIG],
         ),
         (
-            ["linguistic-acceptability", "sentiment-classification"],
+            ["linguistic-acceptability", "reading-comprehension"],
             None,
             [DANISH],
-            [SCALA_DA_CONFIG, ANGRY_TWEETS_CONFIG],
+            [SCALA_DA_CONFIG, MULTI_WIKI_QA_DA_CONFIG],
         ),
         (
             None,
@@ -210,30 +224,38 @@ def test_prepare_dataset_configs(
         dataset=input_dataset,
         languages=input_languages,
         custom_datasets_file=Path("custom_datasets.py"),
+        api_key=os.getenv("HF_TOKEN"),
+        cache_dir=Path(".euroeval_cache"),
     )
     assert set(prepared_dataset_configs) == set(expected_dataset_configs)
 
 
 def test_prepare_dataset_configs_invalid_task() -> None:
     """Test that an invalid task raises an error."""
-    with pytest.raises(InvalidBenchmark):
+    with pytest.raises(SystemExit) as exc_info:
         prepare_dataset_configs(
             task="invalid-task",
             dataset=None,
             languages=[DANISH],
             custom_datasets_file=Path("custom_datasets.py"),
+            api_key=os.getenv("HF_TOKEN"),
+            cache_dir=Path(".euroeval_cache"),
         )
+    assert exc_info.value.code == 1
 
 
 def test_prepare_dataset_configs_invalid_dataset() -> None:
     """Test that an invalid dataset raises an error."""
-    with pytest.raises(InvalidBenchmark):
+    with pytest.raises(SystemExit) as exc_info:
         prepare_dataset_configs(
             task=None,
             dataset="invalid-dataset",
             languages=[DANISH],
             custom_datasets_file=Path("custom_datasets.py"),
+            api_key=os.getenv("HF_TOKEN"),
+            cache_dir=Path(".euroeval_cache"),
         )
+    assert exc_info.value.code == 1
 
 
 @pytest.mark.parametrize(

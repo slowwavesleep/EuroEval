@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import GREEK
 from ..tasks import COMMON_SENSE, KNOW, LA, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 GREEK_SA_CONFIG = DatasetConfig(
     name="greek-sa",
@@ -12,7 +12,7 @@ GREEK_SA_CONFIG = DatasetConfig(
     source="EuroEval/greek-sa-mini",
     task=SENT,
     languages=[GREEK],
-    _labels=["negative", "positive"],
+    labels=["negative", "positive"],
 )
 
 SCALA_EL_CONFIG = DatasetConfig(

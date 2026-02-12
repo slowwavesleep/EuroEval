@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import DANISH
 from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 ANGRY_TWEETS_CONFIG = DatasetConfig(
     name="angry-tweets",
@@ -76,12 +76,13 @@ VALEU_DA_CONFIG = DatasetConfig(
     source="EuroEval/european-values-da",
     task=EUROPEAN_VALUES,
     languages=[DANISH],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 DANE_CONFIG = DatasetConfig(
     name="dane",
@@ -143,6 +144,6 @@ WINOGRANDE_DA_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-da",
     task=COMMON_SENSE,
     languages=[DANISH],
-    _labels=["a", "b"],
+    labels=["a", "b"],
     unofficial=True,
 )

@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import GERMAN
 from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 SB10K_CONFIG = DatasetConfig(
     name="sb10k",
@@ -68,13 +68,14 @@ VALEU_DE_CONFIG = DatasetConfig(
     source="EuroEval/european-values-de",
     task=EUROPEAN_VALUES,
     languages=[GERMAN],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
-    _instruction_prompt="{text}",
+    instruction_prompt="{text}",
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 XQUAD_DE_CONFIG = DatasetConfig(
     name="xquad-de",
@@ -127,6 +128,6 @@ WINOGRANDE_DE_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-de",
     task=COMMON_SENSE,
     languages=[GERMAN],
-    _labels=["a", "b"],
+    labels=["a", "b"],
     unofficial=True,
 )

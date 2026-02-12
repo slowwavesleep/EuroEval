@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import ITALIAN
 from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 SENTIPOLC_CONFIG = DatasetConfig(
     name="sentipolc16",
@@ -68,13 +68,14 @@ VALEU_IT_CONFIG = DatasetConfig(
     source="EuroEval/european-values-it",
     task=EUROPEAN_VALUES,
     languages=[ITALIAN],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
-    _instruction_prompt="{text}",
+    instruction_prompt="{text}",
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 WIKINEURAL_IT_CONFIG = DatasetConfig(
     name="wikineural-it",
@@ -118,6 +119,6 @@ WINOGRANDE_IT_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-it",
     task=COMMON_SENSE,
     languages=[ITALIAN],
-    _labels=["a", "b"],
+    labels=["a", "b"],
     unofficial=True,
 )

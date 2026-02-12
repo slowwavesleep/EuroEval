@@ -9,14 +9,15 @@ import typing as t
 import requests
 from datasets import DatasetDict, load_dataset
 from datasets.exceptions import DatasetsError
-from huggingface_hub.errors import HfHubHTTPError
+from huggingface_hub.errors import HfHubHTTPError, RepositoryNotFoundError
 from numpy.random import Generator
 
 from .constants import SUPPORTED_FILE_FORMATS_FOR_LOCAL_DATASETS
 from .exceptions import HuggingFaceHubDown, InvalidBenchmark
 from .logging_utils import log, no_terminal_output
+from .string_utils import unscramble
 from .tasks import EUROPEAN_VALUES
-from .utils import unscramble
+from .utils import get_hf_token
 
 if t.TYPE_CHECKING:
     from datasets import Dataset
@@ -39,23 +40,32 @@ def load_data(
 
     Returns:
         A list of bootstrapped datasets, one for each iteration.
-
-    Raises:
-        InvalidBenchmark:
-            If the dataset cannot be loaded.
-        HuggingFaceHubDown:
-            If the Hugging Face Hub is down.
     """
     dataset = load_raw_data(
-        dataset_config=dataset_config, cache_dir=benchmark_config.cache_dir
+        dataset_config=dataset_config,
+        cache_dir=benchmark_config.cache_dir,
+        api_key=benchmark_config.api_key,
     )
 
-    if not benchmark_config.evaluate_test_split and "val" in dataset:
-        dataset["test"] = dataset["val"]
+    if (
+        not benchmark_config.evaluate_test_split
+        and dataset_config.val_split is not None
+    ):
+        dataset[dataset_config.test_split] = dataset[dataset_config.val_split]
+
+    splits = [
+        split
+        for split in [
+            dataset_config.train_split,
+            dataset_config.val_split,
+            dataset_config.test_split,
+        ]
+        if split is not None
+    ]
 
     # Remove empty examples from the datasets
     for text_feature in ["tokens", "text"]:
-        for split in dataset_config.splits:
+        for split in splits:
             if text_feature in dataset[split].features:
                 dataset = dataset.filter(lambda x: len(x[text_feature]) > 0)
 
@@ -67,7 +77,7 @@ def load_data(
     # Bootstrap the splits, if applicable
     if dataset_config.bootstrap_samples:
         bootstrapped_splits: dict[str, c.Sequence["Dataset"]] = dict()
-        for split in dataset_config.splits:
+        for split in splits:
             bootstrap_indices = rng.integers(
                 0,
                 len(dataset[split]),
@@ -81,7 +91,12 @@ def load_data(
             DatasetDict(  # type: ignore[no-matching-overload]
                 {
                     split: bootstrapped_splits[split][idx]
-                    for split in dataset_config.splits
+                    for split in [
+                        dataset_config.train_split,
+                        dataset_config.val_split,
+                        dataset_config.test_split,
+                    ]
+                    if split is not None
                 }
             )
             for idx in range(benchmark_config.num_iterations)
@@ -92,7 +107,9 @@ def load_data(
     return datasets
 
 
-def load_raw_data(dataset_config: "DatasetConfig", cache_dir: str) -> "DatasetDict":
+def load_raw_data(
+    dataset_config: "DatasetConfig", cache_dir: str, api_key: str | None
+) -> "DatasetDict":
     """Load the raw dataset.
 
     Args:
@@ -100,9 +117,17 @@ def load_raw_data(dataset_config: "DatasetConfig", cache_dir: str) -> "DatasetDi
             The configuration for the dataset.
         cache_dir:
             The directory to cache the dataset.
+        api_key:
+            The API key to use as the Hugging Face token.
 
     Returns:
         The dataset.
+
+    Raises:
+        InvalidBenchmark:
+            If the dataset cannot be loaded.
+        HuggingFaceHubDown:
+            If the Hugging Face Hub is down.
     """
     # Case where the dataset source is a Hugging Face ID
     if isinstance(dataset_config.source, str):
@@ -125,16 +150,38 @@ def load_raw_data(dataset_config: "DatasetConfig", cache_dir: str) -> "DatasetDi
                 FileNotFoundError,
                 ConnectionError,
                 DatasetsError,
+                RepositoryNotFoundError,
                 requests.ConnectionError,
                 requests.ReadTimeout,
-            ) as e:
-                log(
-                    f"Failed to load dataset {dataset_config.source!r}, due to "
-                    f"the following error: {e}. Retrying...",
-                    level=logging.DEBUG,
-                )
-                time.sleep(1)
-                continue
+            ):
+                try:
+                    with no_terminal_output():
+                        dataset = load_dataset(
+                            path=dataset_config.source.split("::")[0],
+                            name=(
+                                dataset_config.source.split("::")[1]
+                                if "::" in dataset_config.source
+                                else None
+                            ),
+                            cache_dir=cache_dir,
+                            token=get_hf_token(api_key=api_key),
+                        )
+                    break
+                except (
+                    FileNotFoundError,
+                    ConnectionError,
+                    DatasetsError,
+                    RepositoryNotFoundError,
+                    requests.ConnectionError,
+                    requests.ReadTimeout,
+                ) as e:
+                    log(
+                        f"Failed to load dataset {dataset_config.source!r}, due to "
+                        f"the following error: {e}. Retrying...",
+                        level=logging.DEBUG,
+                    )
+                    time.sleep(1)
+                    continue
             except HfHubHTTPError:
                 raise HuggingFaceHubDown()
         else:
@@ -147,17 +194,22 @@ def load_raw_data(dataset_config: "DatasetConfig", cache_dir: str) -> "DatasetDi
     # Case where the dataset source is a dictionary with keys "train", "val" and "test",
     # with the values pointing to local CSV files
     else:
+        split_mapping = dict(
+            train=dataset_config.train_split,
+            val=dataset_config.val_split,
+            test=dataset_config.test_split,
+        )
         data_files = {
-            split: dataset_config.source[split]
-            for split in dataset_config.splits
-            if split in dataset_config.source
+            config_split: dataset_config.source[source_split]
+            for source_split, config_split in split_mapping.items()
+            if source_split in dataset_config.source and config_split is not None
         }
 
         # Get the file extension and ensure that all files have the same extension
         file_extensions = {
-            split: dataset_config.source[split].split(".")[-1]
-            for split in dataset_config.splits
-            if split in dataset_config.source
+            config_split: dataset_config.source[source_split].split(".")[-1]
+            for source_split, config_split in split_mapping.items()
+            if source_split in dataset_config.source and config_split is not None
         }
         if len(set(file_extensions.values())) != 1:
             raise InvalidBenchmark(
@@ -182,11 +234,15 @@ def load_raw_data(dataset_config: "DatasetConfig", cache_dir: str) -> "DatasetDi
                 path=file_extension, data_files=data_files, cache_dir=cache_dir
             )
 
-    assert isinstance(dataset, DatasetDict)  # type: ignore[used-before-def]
-    missing_keys = [key for key in dataset_config.splits if key not in dataset]
-    if missing_keys:
-        raise InvalidBenchmark(
-            "The dataset is missing the following required splits: "
-            f"{', '.join(missing_keys)}"
-        )
-    return DatasetDict({key: dataset[key] for key in dataset_config.splits})  # type: ignore[no-matching-overload]
+    assert isinstance(dataset, DatasetDict)
+    return DatasetDict(  # pyrefly: ignore[no-matching-overload]
+        {
+            split: dataset[split]
+            for split in [
+                dataset_config.train_split,
+                dataset_config.val_split,
+                dataset_config.test_split,
+            ]
+            if split is not None
+        }
+    )

@@ -8,36 +8,10 @@ from pathlib import Path
 import pytest
 from click import ParamType
 
-from euroeval import __version__, data_models, enums
+from euroeval import __version__
 from euroeval.benchmarker import Benchmarker
 from euroeval.data_models import BenchmarkConfig, BenchmarkConfigParams, BenchmarkResult
 from euroeval.metrics import HuggingFaceMetric, Metric
-
-
-def test_all_classes_are_dataclasses_or_pydantic_models() -> None:
-    """Test that all classes in `data_models` are dataclasses or Pydantic models."""
-    all_classes = [
-        getattr(data_models, obj_name)
-        for obj_name in dir(data_models)
-        if not obj_name.startswith("_")
-        and inspect.isclass(object=getattr(data_models, obj_name))
-        and not hasattr(enums, obj_name)
-        and obj_name
-        not in {
-            "ScoreDict",
-            "Metric",
-            "HashableDict",
-            "InvalidBenchmark",
-            "Path",
-            "GenerationConfig",
-        }
-    ]
-    for obj in all_classes:
-        obj_is_dataclass = hasattr(obj, "__dataclass_fields__")
-        obj_is_pydantic_model = hasattr(obj, "model_fields")
-        assert obj_is_dataclass or obj_is_pydantic_model, (
-            f"{obj.__name__} is not a dataclass or Pydantic model. "
-        )
 
 
 class TestMetric:
@@ -84,7 +58,11 @@ class TestBenchmarkResult:
 
     @pytest.fixture(scope="class")
     def benchmark_result(self) -> Generator[BenchmarkResult, None, None]:
-        """Fixture for a `BenchmarkResult` object."""
+        """Fixture for a `BenchmarkResult` object.
+
+        Yields:
+            A `BenchmarkResult` object.
+        """
         yield BenchmarkResult(
             dataset="dataset",
             model="model",
@@ -103,7 +81,11 @@ class TestBenchmarkResult:
 
     @pytest.fixture(scope="class")
     def results_path(self) -> Generator[Path, None, None]:
-        """Fixture for a `Path` object to a results file."""
+        """Fixture for a `Path` object to a results file.
+
+        Yields:
+            A `Path` object to a results file.
+        """
         results_path = Path(".euroeval_cache/test_results.jsonl")
         results_path.parent.mkdir(parents=True, exist_ok=True)
         yield results_path

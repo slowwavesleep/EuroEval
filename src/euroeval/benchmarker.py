@@ -15,10 +15,9 @@ from time import sleep
 from torch.distributed import destroy_process_group
 
 from .benchmark_config_factory import build_benchmark_config
-from .constants import GENERATIVE_PIPELINE_TAGS
+from .constants import ATTENTION_BACKENDS, GENERATIVE_PIPELINE_TAGS
 from .data_loading import load_data, load_raw_data
 from .data_models import BenchmarkConfigParams, BenchmarkResult
-from .dataset_configs import get_all_dataset_configs
 from .enums import Device, GenerativeType, ModelType
 from .exceptions import HuggingFaceHubDown, InvalidBenchmark, InvalidModel
 from .finetuning import finetune
@@ -28,12 +27,9 @@ from .model_config import get_model_config
 from .model_loading import load_model
 from .scores import log_scores
 from .speed_benchmark import benchmark_speed
+from .string_utils import split_model_id
 from .tasks import SPEED
-from .utils import (
-    enforce_reproducibility,
-    internet_connection_available,
-    split_model_id,
-)
+from .utils import enforce_reproducibility, internet_connection_available
 
 if t.TYPE_CHECKING:
     from .benchmark_modules import BenchmarkModule
@@ -79,6 +75,9 @@ class Benchmarker:
         api_base: str | None = None,
         api_version: str | None = None,
         gpu_memory_utilization: float = 0.8,
+        attention_backend: t.Literal[
+            *ATTENTION_BACKENDS  # pyrefly: ignore[invalid-literal]
+        ] = "FLASHINFER",
         generative_type: GenerativeType | None = None,
         custom_datasets_file: Path | str = Path("custom_datasets.py"),
         debug: bool = False,
@@ -149,6 +148,9 @@ class Benchmarker:
                 is generative. A larger value will result in faster evaluation, but at
                 the risk of running out of GPU memory. Only reduce this if you are
                 running out of GPU memory. Defaults to 0.9.
+            attention_backend:
+                The attention backend to use for vLLM. Defaults to FLASHINFER. Only
+                relevant if the model is generative.
             generative_type:
                 The type of generative model to benchmark. Only relevant if the model is
                 generative. If not specified, then the type will be inferred based on
@@ -178,8 +180,6 @@ class Benchmarker:
             ValueError:
                 If both `task` and `dataset` are specified, or if `download_only`
                 is True and we have no internet connection.
-            ImportError:
-                If `hf_transfer` is enabled but not installed.
         """
         if task is not None and dataset is not None:
             raise ValueError("Only one of `task` and `dataset` can be specified.")
@@ -264,6 +264,7 @@ class Benchmarker:
             requires_safetensors=requires_safetensors,
             download_only=download_only,
             gpu_memory_utilization=gpu_memory_utilization,
+            attention_backend=attention_backend,
             generative_type=generative_type,
             custom_datasets_file=Path(custom_datasets_file),
             verbose=verbose,
@@ -341,7 +342,9 @@ class Benchmarker:
             f"Loading data for {dataset_config.logging_string}", level=logging.INFO
         )
         dataset = load_raw_data(
-            dataset_config=dataset_config, cache_dir=benchmark_config.cache_dir
+            dataset_config=dataset_config,
+            cache_dir=benchmark_config.cache_dir,
+            api_key=benchmark_config.api_key,
         )
         del dataset
 
@@ -385,6 +388,10 @@ class Benchmarker:
         download_only: bool | None = None,
         gpu_memory_utilization: float | None = None,
         generative_type: GenerativeType | None = None,
+        attention_backend: t.Literal[
+            *ATTENTION_BACKENDS  # pyrefly: ignore[invalid-literal]
+        ]
+        | None = None,
         custom_datasets_file: Path | str | None = None,
         force: bool | None = None,
         verbose: bool | None = None,
@@ -477,6 +484,10 @@ class Benchmarker:
                 generative. If not specified, then the type will be inferred based on
                 the tags of the model. Defaults to the value specified when initialising
                 the benchmarker.
+            attention_backend:
+                The attention backend to use for vLLM. Only relevant if the model is
+                generative. Defaults to the value specified when initialising the
+                benchmarker.
             custom_datasets_file:
                 Path to a Python file defining custom datasets. Defaults to the value
                 specified when initialising the benchmarker.
@@ -503,7 +514,15 @@ class Benchmarker:
         Raises:
             ValueError:
                 If both `task` and `dataset` are specified.
+            InvalidModel:
+                If we're offline benchmarking an adapter model, or if model loading
+                failed.
         """
+        log(
+            "Started EuroEval run. Run with `--verbose` for more information.",
+            level=logging.INFO,
+        )
+
         if task is not None and dataset is not None:
             raise ValueError("Only one of `task` and `dataset` can be specified.")
 
@@ -638,6 +657,11 @@ class Benchmarker:
                 if generative_type is not None
                 else self.benchmark_config_default_params.generative_type
             ),
+            attention_backend=(
+                attention_backend
+                if attention_backend is not None
+                else self.benchmark_config_default_params.attention_backend
+            ),
             custom_datasets_file=(
                 Path(custom_datasets_file)
                 if custom_datasets_file is not None
@@ -735,6 +759,8 @@ class Benchmarker:
             return current_benchmark_results
 
         num_finished_benchmarks = 0
+        num_skipped_benchmarks = 0
+        num_errored_benchmarks = 0
         benchmark_params_to_revert: dict[str, t.Any] = dict()
         for model_config in model_configs:
             if not model_config_to_dataset_configs[model_config]:
@@ -776,7 +802,7 @@ class Benchmarker:
 
                 # Update the benchmark config if the dataset requires it
                 if (
-                    "val" not in dataset_config.splits
+                    dataset_config.val_split is None
                     and not benchmark_config.evaluate_test_split
                 ):
                     log(
@@ -815,7 +841,7 @@ class Benchmarker:
                             # Add the remaining number of benchmarks for the model to
                             # our benchmark counter, since we're skipping the rest of
                             # them
-                            num_finished_benchmarks += (
+                            num_skipped_benchmarks += (
                                 len(dataset_configs)
                                 - dataset_configs.index(dataset_config)
                                 - 1
@@ -838,7 +864,7 @@ class Benchmarker:
                             f"only allows {dataset_config.allowed_generative_types}.",
                             level=logging.DEBUG,
                         )
-                        num_finished_benchmarks += 1
+                        num_skipped_benchmarks += 1
                         continue
 
                 # Benchmark a single model on a single dataset
@@ -847,7 +873,11 @@ class Benchmarker:
                     model_config=model_config,
                     dataset_config=dataset_config,
                     benchmark_config=benchmark_config,
-                    num_finished_benchmarks=num_finished_benchmarks,
+                    num_finished_benchmarks=(
+                        num_finished_benchmarks
+                        + num_skipped_benchmarks
+                        + num_errored_benchmarks
+                    ),
                     num_total_benchmarks=total_benchmarks,
                 )
 
@@ -859,7 +889,7 @@ class Benchmarker:
 
                 elif isinstance(benchmark_output_or_err, InvalidBenchmark):
                     log(benchmark_output_or_err.message, level=logging.WARNING)
-                    num_finished_benchmarks += 1
+                    num_errored_benchmarks += 1
                     continue
 
                 elif isinstance(benchmark_output_or_err, InvalidModel):
@@ -867,7 +897,7 @@ class Benchmarker:
 
                     # Add the remaining number of benchmarks for the model to our
                     # benchmark counter, since we're skipping the rest of them
-                    num_finished_benchmarks += (
+                    num_errored_benchmarks += (
                         len(dataset_configs) - dataset_configs.index(dataset_config) - 1
                     )
                     break
@@ -877,16 +907,25 @@ class Benchmarker:
                     current_benchmark_results.append(record)
                     if benchmark_config.save_results:
                         record.append_to_results(results_path=self.results_path)
-
-                num_finished_benchmarks += 1
+                    num_finished_benchmarks += 1
 
             del loaded_model
             if benchmark_config.clear_model_cache:
                 clear_model_cache_fn(cache_dir=benchmark_config.cache_dir)
 
-        log(
-            f"\nCompleted {num_finished_benchmarks:,} benchmarks.\n", level=logging.INFO
-        )
+        msg_components: list[str] = list()
+        if num_finished_benchmarks:
+            msg_components.append(f"completed {num_finished_benchmarks:,} benchmarks")
+        if num_skipped_benchmarks:
+            msg_components.append(f"skipped {num_skipped_benchmarks:,} benchmarks")
+        if num_errored_benchmarks:
+            msg_components.append(f"errored {num_errored_benchmarks:,} benchmarks")
+        if msg_components:
+            msg_components[0] = msg_components[0].capitalize()
+            if len(msg_components) > 1:
+                msg_components[-1] = "and " + msg_components[-1]
+            msg = "\n" + ", ".join(msg_components)
+            log(msg, level=logging.INFO)
 
         # This avoids the following warning at the end of the benchmarking:
         #   Warning: WARNING: process group has NOT been destroyed before we destruct
@@ -896,8 +935,9 @@ class Benchmarker:
         #   point and block the progress of another member of the process group. This
         #   constraint has always been present,  but this warning has only been added
         #   since PyTorch 2.4 (function operator())
-        with contextlib.suppress(AssertionError):
+        with contextlib.suppress(Exception):
             destroy_process_group()
+
         return current_benchmark_results
 
     def _prepare_model_ids(self, model_id: c.Sequence[str] | str) -> c.Sequence[str]:
@@ -1052,7 +1092,7 @@ class Benchmarker:
                     ),
                     validation_split=(
                         None
-                        if "val" not in dataset_config.splits
+                        if dataset_config.val_split is None
                         else not benchmark_config.evaluate_test_split
                     ),
                 )
@@ -1094,7 +1134,17 @@ class Benchmarker:
             )
 
     def __call__(self, *args: t.Any, **kwds: t.Any) -> t.Any:  # noqa: ANN401
-        """Alias for `self.benchmark()`."""
+        """Alias for `self.benchmark()`.
+
+        Args:
+            *args:
+                Positional arguments to pass to `self.benchmark()`.
+            **kwds:
+                Keyword arguments to pass to `self.benchmark()`.
+
+        Returns:
+            The result of `self.benchmark()`.
+        """
         log(
             "Calling the `Benchmarker` class directly is deprecated. Please use the "
             "`benchmark` function instead. This will be removed in a future version.",
@@ -1165,29 +1215,6 @@ def clear_model_cache_fn(cache_dir: str) -> None:
             for sub_model_dir in model_dir.iterdir():
                 if sub_model_dir.is_dir():
                     rmtree(sub_model_dir)
-
-
-def prepare_dataset_configs(
-    dataset_names: c.Sequence[str], custom_datasets_file: Path
-) -> c.Sequence["DatasetConfig"]:
-    """Prepare the dataset configuration(s) to be benchmarked.
-
-    Args:
-        dataset_names:
-            The dataset names to benchmark.
-        custom_datasets_file:
-            A path to a Python file containing custom dataset configurations.
-
-    Returns:
-        The prepared list of model IDs.
-    """
-    return [
-        cfg
-        for cfg in get_all_dataset_configs(
-            custom_datasets_file=custom_datasets_file
-        ).values()
-        if cfg.name in dataset_names
-    ]
 
 
 def initial_logging(

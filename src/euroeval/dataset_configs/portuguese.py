@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import EUROPEAN_PORTUGUESE, PORTUGUESE
 from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 SST2_PT_CONFIG = DatasetConfig(
     name="sst2-pt",
@@ -12,7 +12,7 @@ SST2_PT_CONFIG = DatasetConfig(
     source="EuroEval/sst2-pt-mini",
     task=SENT,
     languages=[PORTUGUESE, EUROPEAN_PORTUGUESE],
-    _labels=["positive", "negative"],
+    labels=["positive", "negative"],
 )
 
 SCALA_PT = DatasetConfig(
@@ -69,13 +69,14 @@ VALEU_PT_CONFIG = DatasetConfig(
     source="EuroEval/european-values-pt",
     task=EUROPEAN_VALUES,
     languages=[PORTUGUESE, EUROPEAN_PORTUGUESE],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
-    _instruction_prompt="{text}",
+    instruction_prompt="{text}",
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 BOOLQ_PT_CONFIG = DatasetConfig(
     name="boolq-pt",
@@ -92,6 +93,6 @@ WINOGRANDE_PT_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-pt",
     task=COMMON_SENSE,
     languages=[PORTUGUESE, EUROPEAN_PORTUGUESE],
-    _labels=["a", "b"],
+    labels=["a", "b"],
     unofficial=True,
 )

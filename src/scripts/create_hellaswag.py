@@ -31,7 +31,11 @@ LANGUAGES = ["da", "de", "en", "es", "fr", "is", "it", "nl", "no", "pt", "sv"]
 
 
 def main() -> None:
-    """Create the HellaSwag-mini datasets and upload them to the HF Hub."""
+    """Create the HellaSwag-mini datasets and upload them to the HF Hub.
+
+    Raises:
+        ValueError: If the dataset could not be loaded.
+    """
     # Define the base download URL
     repo_id = "alexandrainst/m_hellaswag"
 
@@ -55,9 +59,11 @@ def main() -> None:
             (df.ctx.str.len() >= MIN_NUM_CHARS_IN_INSTRUCTION)
             & (df.ctx.str.len() <= MAX_NUM_CHARS_IN_INSTRUCTION)
             & df.endings.map(
-                lambda endings: min(len(ending) for ending in endings)
-                >= MIN_NUM_CHARS_IN_OPTION
-                and max(len(ending) for ending in endings) <= MAX_NUM_CHARS_IN_OPTION
+                lambda endings: (
+                    min(len(ending) for ending in endings) >= MIN_NUM_CHARS_IN_OPTION
+                    and max(len(ending) for ending in endings)
+                    <= MAX_NUM_CHARS_IN_OPTION
+                )
             )
         ]
 

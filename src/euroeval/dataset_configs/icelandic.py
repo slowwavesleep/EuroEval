@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import ICELANDIC
 from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 HOTTER_AND_COLDER_SENTIMENT_CONFIG = DatasetConfig(
     name="hotter-and-colder-sentiment",
@@ -60,7 +60,7 @@ WINOGRANDE_IS_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-is",
     task=COMMON_SENSE,
     languages=[ICELANDIC],
-    _labels=["a", "b"],
+    labels=["a", "b"],
 )
 
 VALEU_IS_CONFIG = DatasetConfig(
@@ -69,13 +69,14 @@ VALEU_IS_CONFIG = DatasetConfig(
     source="EuroEval/european-values-is",
     task=EUROPEAN_VALUES,
     languages=[ICELANDIC],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
-    _instruction_prompt="{text}",
+    instruction_prompt="{text}",
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 ICE_EC_CONFIG = DatasetConfig(
     name="ice-ec",

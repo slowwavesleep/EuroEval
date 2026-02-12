@@ -1,6 +1,7 @@
 """Encoder models from the Hugging Face Hub."""
 
 import collections.abc as c
+import importlib
 import logging
 import re
 import typing as t
@@ -63,6 +64,8 @@ from ..exceptions import (
 from ..generation_utils import raise_if_wrong_params
 from ..languages import get_all_languages
 from ..logging_utils import block_terminal_output, log, log_once
+from ..model_cache import create_model_cache_dir
+from ..string_utils import split_model_id
 from ..task_group_utils import (
     multiple_choice_classification,
     question_answering,
@@ -70,13 +73,7 @@ from ..task_group_utils import (
 )
 from ..tokenisation_utils import get_bos_token, get_eos_token
 from ..types import Tokeniser
-from ..utils import (
-    create_model_cache_dir,
-    get_class_by_name,
-    get_hf_token,
-    internet_connection_available,
-    split_model_id,
-)
+from ..utils import get_hf_token, internet_connection_available
 from .base import BenchmarkModule
 
 try:
@@ -381,7 +378,7 @@ class HuggingFaceEncoderModel(BenchmarkModule):
             if "label" in examples:
                 try:
                     examples["label"] = [
-                        self._model.config.label2id[lbl.lower()]
+                        self._model.config.label2id[str(lbl).lower()]
                         if self._model.config.label2id is not None
                         else lbl
                         for lbl in examples["label"]
@@ -539,6 +536,10 @@ class HuggingFaceEncoderModel(BenchmarkModule):
 
         Returns:
             The model configuration.
+
+        Raises:
+            InvalidModel:
+                If the model could not be found.
         """
         model_id_components = split_model_id(model_id=model_id)
         model_info = get_model_repo_info(
@@ -596,6 +597,12 @@ def load_model_and_tokeniser(
 
     Returns:
         A pair (model, tokeniser), with the loaded model and tokeniser
+
+    Raises:
+        InvalidModel:
+            If the model could not be loaded.
+        InvalidBenchmark:
+            If the model could not be loaded for this particular dataset.
     """
     config: "PretrainedConfig"
     block_terminal_output()
@@ -746,6 +753,16 @@ def get_model_repo_info(
             The model ID.
         revision:
             The revision of the model.
+        api_key:
+            The Hugging Face API key.
+        cache_dir:
+            The directory to cache the model in.
+        trust_remote_code:
+            Whether to trust remote code.
+        requires_safetensors:
+            Whether the model requires safetensors.
+        run_with_cli:
+            Whether the script is being run with the CLI.
 
     Returns:
         The information about the model, or None if the model could not be found.
@@ -758,20 +775,30 @@ def get_model_repo_info(
     # model info object.
     model_info: HfApiModelInfo | None = None
     if Path(model_id).is_dir():
-        if all(
-            (Path(model_id) / required_file).exists()
-            for required_file in LOCAL_MODELS_REQUIRED_FILES
-        ):
+        if Path(model_id, "config.json").exists():
             log_once(
-                f"The local model directory {model_id!r} has all the required model "
-                f"files ({LOCAL_MODELS_REQUIRED_FILES}), so we're skipping looking up "
-                "model information from the Hugging Face Hub.",
+                f"The local model directory {model_id!r} has a 'config.json' file, so "
+                "we're skipping looking up model information from the Hugging Face "
+                "Hub.",
                 level=logging.DEBUG,
             )
             model_info = HfApiModelInfo(id=model_id, tags=None, pipeline_tag=None)
+        elif Path(model_id, "adapter_config.json").exists():
+            log_once(
+                f"The local model directory {model_id!r} has an 'adapter_config.json' "
+                "file, so we're skipping looking up model information from the Hugging "
+                "Face Hub.",
+                level=logging.DEBUG,
+            )
+            model_info = HfApiModelInfo(
+                id=model_id,
+                tags=None,
+                pipeline_tag=None,
+                siblings=[dict(rfilename="adapter_config.json")],
+            )
         else:
             log_once(
-                f"The local model directory {model_id} does not contain all the "
+                f"The local model directory {model_id} does not contain any of the "
                 f"required files: {LOCAL_MODELS_REQUIRED_FILES}. Skipping this "
                 f"model.",
                 level=logging.WARNING,
@@ -807,8 +834,8 @@ def get_model_repo_info(
                     log(
                         f"Could not access the model {model_id} with the revision "
                         f"{revision}. The error was {str(e)!r}. Please set the "
-                        "`HUGGINGFACE_API_KEY` environment variable or use the "
-                        "`--api-key` argument.",
+                        "`HUGGINGFACE_API_KEY` or `HF_TOKEN` environment variable or "
+                        "use the `--api-key` argument.",
                         level=logging.DEBUG,
                     )
                     return None
@@ -876,8 +903,9 @@ def get_model_repo_info(
             for tag in GENERATIVE_PIPELINE_TAGS
             for class_name in TASK_MAPPING.get(tag, dict()).values()  # type: ignore[attr-defined]
         ]
-        if class_names is not None and any(
-            class_name in generative_class_names for class_name in class_names
+        if class_names is not None and (
+            any(class_name in generative_class_names for class_name in class_names)
+            or any("ForCausalLM" in class_name for class_name in class_names)
         ):
             pipeline_tag = "text-generation"
         else:
@@ -945,6 +973,10 @@ def load_tokeniser(
 
     Returns:
         The loaded tokeniser.
+
+    Raises:
+        InvalidModel:
+            If the tokeniser could not be loaded.
     """
     loading_kwargs: dict[str, bool | str] = dict(
         use_fast=False if model_config.param == "slow-tokenizer" else True,
@@ -1057,6 +1089,12 @@ def load_hf_model_config(
 
     Returns:
         The Hugging Face model configuration.
+
+    Raises:
+        NeedsAdditionalArgument:
+            If an additional argument is required to load the model configuration.
+        InvalidModel:
+            If the model configuration could not be loaded.
     """
     for _ in range(num_attempts := 5):
         try:
@@ -1084,8 +1122,8 @@ def load_hf_model_config(
                     f"The model {model_id!r} is a gated repository. Please ensure "
                     "that you are logged in with `hf auth login` or have provided a "
                     "valid Hugging Face access token with the `HUGGINGFACE_API_KEY` "
-                    "environment variable or the `--api-key` argument. Also check that "
-                    "your account has access to this model."
+                    "or `HF_TOKEN` environment variable or the `--api-key` argument. "
+                    "Also check that your account has access to this model."
                 ) from e
             raise InvalidModel(
                 f"Couldn't load model config for {model_id!r}. The error was "
@@ -1121,7 +1159,11 @@ def load_hf_model_config(
         )
 
     # Ensure that the PAD token ID is set
-    if config.eos_token_id is not None and config.pad_token_id is None:
+    if (
+        hasattr(config, "eos_token_id")
+        and config.eos_token_id is not None
+        and (not hasattr(config, "pad_token_id") or config.pad_token_id is None)
+    ):
         if isinstance(config.eos_token_id, list):
             config.pad_token_id = config.eos_token_id[0]
         else:
@@ -1139,6 +1181,10 @@ def setup_model_for_question_answering(model: "PreTrainedModel") -> "PreTrainedM
 
     Returns:
         The setup model.
+
+    Raises:
+        InvalidModel:
+            If the model does not have token type embeddings.
     """
     # Get the models' token type embedding children, if they exist
     children = get_children_of_module(name="model", module=model)
@@ -1237,6 +1283,12 @@ def align_model_and_tokeniser(
 
     Returns:
         The fixed model and tokeniser.
+
+    Raises:
+        InvalidModel:
+            If the model's vocab size is not set correctly.
+        ValueError:
+            If an error appeared during inference.
     """
     model_max_length = min(model_max_length, MAX_CONTEXT_LENGTH)
 
@@ -1319,3 +1371,44 @@ def task_group_to_class_name(task_group: TaskGroup) -> str:
     )
     pascal_case = special_case_mapping.get(pascal_case, pascal_case)
     return f"AutoModelFor{pascal_case}"
+
+
+def get_class_by_name(
+    class_name: str | c.Sequence[str], module_name: str
+) -> t.Type | None:
+    """Get a class by its name.
+
+    Args:
+        class_name:
+            The name of the class, written in kebab-case. The corresponding class name
+            must be the same, but written in PascalCase, and lying in a module with the
+            same name, but written in snake_case. If a list of strings is passed, the
+            first class that is found is returned.
+        module_name:
+            The name of the module where the class is located.
+
+    Returns:
+        The class. If the class is not found, None is returned.
+    """
+    if isinstance(class_name, str):
+        class_name = [class_name]
+
+    error_messages = list()
+    for name in class_name:
+        try:
+            module = importlib.import_module(name=module_name)
+            class_: t.Type = getattr(module, name)
+            return class_
+        except (ModuleNotFoundError, AttributeError) as e:
+            error_messages.append(str(e))
+
+    if error_messages:
+        errors = "\n- " + "\n- ".join(error_messages)
+        log(
+            f"Could not find the class with the name(s) {', '.join(class_name)}. The "
+            f"following error messages were raised: {errors}",
+            level=logging.DEBUG,
+        )
+
+    # If the class could not be found, return None
+    return None

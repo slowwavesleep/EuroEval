@@ -1,7 +1,7 @@
 """EuroEval - A benchmarking framework for language models."""
 
-### STAGE 1 ###
-### Block unwanted terminal output that happens on importing external modules ###
+# STAGE 1 ###
+# Block unwanted terminal output that happens on importing external modules ###
 
 import importlib.util
 import logging
@@ -30,8 +30,8 @@ logging.basicConfig(
 )
 
 
-### STAGE 2 ###
-### Check for incompatible packages ###
+# STAGE 2 ###
+# Check for incompatible packages ###
 
 # Throw informative error if `flash_attn` is installed ###
 if importlib.util.find_spec("flash_attn") is not None:
@@ -43,8 +43,8 @@ if importlib.util.find_spec("flash_attn") is not None:
     sys.exit(1)
 
 
-### STAGE 3 ###
-### Set the rest up ###
+# STAGE 3 ###
+# Set the rest up ###
 
 import importlib.metadata  # noqa: E402
 
@@ -108,15 +108,6 @@ os.environ["DISABLE_AIOHTTP_TRANSPORT"] = "True"
 # Enable the newer vLLM V1 engine, which is faster and offers more compatibility with
 # newer models
 os.environ["VLLM_USE_V1"] = "1"
-
-
-# Use the FlashInfer flash-attention backend for vLLM, unless the user has already
-# specified a different backend.
-if os.getenv("VLLM_ATTENTION_BACKEND") is None:
-    os.environ["VLLM_ATTENTION_BACKEND"] = "FLASHINFER"
-    os.environ["USER_HAS_SET_VLLM_ATTENTION_BACKEND"] = "0"
-else:
-    os.environ["USER_HAS_SET_VLLM_ATTENTION_BACKEND"] = "1"
 
 
 # Set the HF_TOKEN env var to copy the HUGGINGFACE_API_KEY env var, as vLLM uses the

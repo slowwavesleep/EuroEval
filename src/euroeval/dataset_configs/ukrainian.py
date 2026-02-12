@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import UKRAINIAN
 from ..tasks import COMMON_SENSE, KNOW, LA, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 CROSS_DOMAIN_UK_REVIEWS_CONFIG = DatasetConfig(
     name="cross-domain-uk-reviews",
@@ -60,5 +60,5 @@ WINOGRANDE_UK_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-uk",
     task=COMMON_SENSE,
     languages=[UKRAINIAN],
-    _labels=["a", "b"],
+    labels=["a", "b"],
 )

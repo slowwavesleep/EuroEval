@@ -13,9 +13,11 @@ except ImportError:
         MistralCommonBackend as MistralCommonTokenizer,
     )
 
+
 if t.TYPE_CHECKING:
     from datasets.arrow_dataset import Dataset
     from numpy.typing import NDArray
+    from pydantic import BaseModel
 
     from .data_models import BenchmarkConfig, GenerativeModelOutput
 
@@ -46,6 +48,8 @@ class ComputeMetricsFunction(t.Protocol):
             dataset:
                 The dataset used for evaluation. This is only used in case any
                 additional metadata is used to compute the metrics.
+            benchmark_config:
+                The benchmark configuration.
 
         Returns:
             The computed metrics.
@@ -69,6 +73,43 @@ class ExtractLabelsFunction(t.Protocol):
 
         Returns:
             The extracted labels.
+        """
+        ...
+
+
+class ScoringFunction(t.Protocol):
+    """A function used to compute a score from a single model output."""
+
+    def __call__(self, output: "BaseModel") -> float:
+        """Compute a score from a model output.
+
+        Args:
+            output:
+                A model output (Pydantic model) from the judge.
+
+        Returns:
+            A float score computed from the output.
+        """
+        ...
+
+
+class BatchScoringFunction(t.Protocol):
+    """A function used to compute batch scores from model outputs."""
+
+    def __call__(
+        self, outputs: list["BaseModel"], dataset: "Dataset | None" = None
+    ) -> float:
+        """Compute a batch score from model outputs.
+
+        Args:
+            outputs:
+                List of model outputs (Pydantic models) from the judge.
+            dataset:
+                Optional dataset used for evaluation. Can be used for additional
+                context when computing the score.
+
+        Returns:
+            A float score computed from the batch of outputs.
         """
         ...
 

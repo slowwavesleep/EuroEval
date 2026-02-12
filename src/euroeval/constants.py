@@ -33,8 +33,8 @@ GENERATIVE_PIPELINE_TAGS = [
 # Used to disallow non-generative models to be evaluated on these task groups
 GENERATIVE_DATASET_TASK_GROUPS = [TaskGroup.TEXT_TO_TEXT]
 
-# Local models are required to have these files in their directory
-LOCAL_MODELS_REQUIRED_FILES = ["config.json"]
+# Local models are required to have one of these files in their directory
+LOCAL_MODELS_REQUIRED_FILES = ["config.json", "adapter_config.json"]
 
 # The number of top log probabilities to return for generative models. For several APIs
 # this is the maximum number of log probabilities that can be returned
@@ -105,3 +105,37 @@ GENERATION_KWARGS = {
     "top_k": 0,
     "repetition_penalty": 1.0,
 }
+
+# This is a mirror of `AttentionBackendEnum` in vLLM, but since we don't have access to
+# this when running on CPU/MacOS (as we can only run an old vLLM version), we have to
+# define it here
+ATTENTION_BACKENDS: list[str] = [
+    "FLASH_ATTN",
+    "FLASH_ATTN_DIFFKV",
+    "TRITON_ATTN",
+    "ROCM_ATTN",
+    "ROCM_AITER_MLA",
+    "ROCM_AITER_TRITON_MLA",
+    "ROCM_AITER_FA",
+    "ROCM_AITER_MLA_SPARSE",
+    "TORCH_SDPA",
+    "FLASHINFER",
+    "FLASHINFER_MLA",
+    "TRITON_MLA",
+    "CUTLASS_MLA",
+    "FLASHMLA",
+    "FLASHMLA_SPARSE",
+    "FLASH_ATTN_MLA",
+    "IPEX",
+    "NO_ATTENTION",
+    "FLEX_ATTENTION",
+    "TREE_ATTN",
+    "ROCM_AITER_UNIFIED_ATTN",
+    "CPU_ATTN",
+    "CUSTOM",
+]
+
+# If a dataset configuration has more than this number of languages, we won't log any of
+# the languages. This is for instance the case for the speed benchmark, which has all
+# the languages. The threshold of 5 is somewhat arbitrary.
+MAX_NUMBER_OF_LOGGING_LANGUAGES = 5

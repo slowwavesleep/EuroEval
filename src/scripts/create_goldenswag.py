@@ -97,6 +97,7 @@ def process_(dataset: Dataset, language_code: str) -> pd.DataFrame:
 
     Args:
         dataset: HuggingFace Dataset to process.
+        language_code: Language code for the dataset
 
     Returns:
         pandas.DataFrame with columns 'text', 'label', and 'activity_label'.
@@ -112,9 +113,10 @@ def process_(dataset: Dataset, language_code: str) -> pd.DataFrame:
         (df.ctx.str.len() >= MIN_NUM_CHARS_IN_INSTRUCTION)
         & (df.ctx.str.len() <= MAX_NUM_CHARS_IN_INSTRUCTION)
         & df.endings.map(
-            lambda endings: min(len(ending) for ending in endings)
-            >= MIN_NUM_CHARS_IN_OPTION
-            and max(len(ending) for ending in endings) <= MAX_NUM_CHARS_IN_OPTION
+            lambda endings: (
+                min(len(ending) for ending in endings) >= MIN_NUM_CHARS_IN_OPTION
+                and max(len(ending) for ending in endings) <= MAX_NUM_CHARS_IN_OPTION
+            )
         )
     ]
 

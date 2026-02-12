@@ -6,6 +6,7 @@ import re
 import typing as t
 
 import torch
+from transformers import BatchEncoding
 
 from .constants import BOS_TOKENS, EOS_TOKENS, PAD_TOKENS
 from .enums import GenerativeType
@@ -323,6 +324,10 @@ def get_end_of_chat_token_ids(
     Returns:
         The token IDs used to end chats, or None if the tokeniser does not have a chat
         template or if no end-of-chat token could be found.
+
+    Raises:
+        InvalidModel:
+            If the tokeniser does not have a chat template.
     """
     if generative_type == GenerativeType.BASE:
         return None
@@ -340,7 +345,17 @@ def get_end_of_chat_token_ids(
         if "does not have a chat template" in str(e):
             return None
         raise e
-    assert isinstance(token_ids, list)
+
+    assert isinstance(token_ids, (BatchEncoding, list)), (
+        f"Expected token_ids to be a BatchEncoding or list, but got {type(token_ids)}.",
+    )
+
+    if isinstance(token_ids, BatchEncoding):
+        token_ids = token_ids.input_ids
+
+    assert isinstance(token_ids, list), (
+        f"Expected token_ids to be a list, but got {type(token_ids)}.",
+    )
 
     for idx, token in enumerate(tokeniser.convert_ids_to_tokens(token_ids)):
         if "X" in token:
@@ -600,4 +615,4 @@ def apply_chat_template(
             tokenize=tokenise,
             **extra_kwargs,
         )
-    return templated_prompt  #  type: ignore[bad-return]
+    return templated_prompt  # type: ignore[bad-return]

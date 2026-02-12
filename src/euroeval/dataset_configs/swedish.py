@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import SWEDISH
 from ..tasks import COMMON_SENSE, EUROPEAN_VALUES, KNOW, LA, MCRC, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 SWEREC_CONFIG = DatasetConfig(
     name="swerec",
@@ -68,13 +68,14 @@ VALEU_SV_CONFIG = DatasetConfig(
     source="EuroEval/european-values-sv",
     task=EUROPEAN_VALUES,
     languages=[SWEDISH],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
-    _instruction_prompt="{text}",
+    instruction_prompt="{text}",
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 SCHIBSTED_SV_CONFIG = DatasetConfig(
     name="schibsted-sv",
@@ -127,7 +128,7 @@ WINOGRANDE_SV_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-sv",
     task=COMMON_SENSE,
     languages=[SWEDISH],
-    _labels=["a", "b"],
+    labels=["a", "b"],
     unofficial=True,
 )
 

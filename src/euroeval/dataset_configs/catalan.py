@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import CATALAN
 from ..tasks import COMMON_SENSE, KNOW, LA, NER, RC, SENT, SUMM
 
-### Official datasets ###
+# Official datasets ###
 
 GUIA_CAT_CONFIG = DatasetConfig(
     name="guia-cat",
@@ -60,5 +60,5 @@ WINOGRANDE_CA_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-ca",
     task=COMMON_SENSE,
     languages=[CATALAN],
-    _labels=["a", "b"],
+    labels=["a", "b"],
 )

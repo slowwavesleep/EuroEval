@@ -4,7 +4,7 @@ from ..data_models import DatasetConfig
 from ..languages import CROATIAN
 from ..tasks import COMMON_SENSE, KNOW, LA, NER, RC, SENT
 
-### Official datasets ###
+# Official datasets ###
 
 MMS_HR_CONFIG = DatasetConfig(
     name="mms-hr",
@@ -52,5 +52,5 @@ WINOGRANDE_HR_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-hr",
     task=COMMON_SENSE,
     languages=[CROATIAN],
-    _labels=["a", "b"],
+    labels=["a", "b"],
 )

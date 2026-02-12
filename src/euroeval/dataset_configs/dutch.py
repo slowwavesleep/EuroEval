@@ -8,6 +8,7 @@ from ..tasks import (
     KNOW,
     LA,
     MCRC,
+    MCSTEREO,
     NER,
     RC,
     SENT,
@@ -15,7 +16,7 @@ from ..tasks import (
     SUMM,
 )
 
-### Official datasets ###
+# Official datasets ###
 
 DBRD_CONFIG = DatasetConfig(
     name="dbrd",
@@ -23,7 +24,7 @@ DBRD_CONFIG = DatasetConfig(
     source="EuroEval/dbrd-mini",
     task=SENT,
     languages=[DUTCH],
-    _labels=["negative", "positive"],
+    labels=["negative", "positive"],
 )
 
 SCALA_NL_CONFIG = DatasetConfig(
@@ -88,13 +89,23 @@ VALEU_NL_CONFIG = DatasetConfig(
     source="EuroEval/european-values-nl",
     task=EUROPEAN_VALUES,
     languages=[DUTCH],
-    splits=["test"],
+    train_split=None,
+    val_split=None,
     bootstrap_samples=False,
-    _instruction_prompt="{text}",
+    instruction_prompt="{text}",
+)
+
+MBBQ_NL_CONFIG = DatasetConfig(
+    name="mbbq-nl",
+    pretty_name="MBBQ-nl",
+    source="EuroEval/mbbq-nl",
+    task=MCSTEREO,
+    languages=[DUTCH],
+    train_split=None,
 )
 
 
-### Unofficial datasets ###
+# Unofficial datasets ###
 
 DUTCH_COLA_CONFIG = DatasetConfig(
     name="dutch-cola",
@@ -148,7 +159,7 @@ COPA_NL_CONFIG = DatasetConfig(
     task=COMMON_SENSE,
     languages=[DUTCH],
     unofficial=True,
-    _labels=["a", "b"],
+    labels=["a", "b"],
 )
 
 GOLDENSWAG_NL_CONFIG = DatasetConfig(
@@ -166,6 +177,6 @@ WINOGRANDE_NL_CONFIG = DatasetConfig(
     source="EuroEval/winogrande-nl",
     task=COMMON_SENSE,
     languages=[DUTCH],
-    _labels=["a", "b"],
+    labels=["a", "b"],
     unofficial=True,
 )

@@ -21,6 +21,7 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 from urllib3.exceptions import RequestError
 
 from ..constants import (
+    ATTENTION_BACKENDS,
     CUSTOM_STOP_TOKENS,
     GENERATION_KWARGS,
     GENERATIVE_PIPELINE_TAGS,
@@ -53,6 +54,8 @@ from ..generation_utils import (
 )
 from ..languages import get_all_languages
 from ..logging_utils import get_pbar, log, log_once, no_terminal_output
+from ..model_cache import create_model_cache_dir
+from ..string_utils import split_model_id
 from ..task_group_utils import (
     question_answering,
     sequence_classification,
@@ -71,14 +74,11 @@ from ..tokenisation_utils import (
 )
 from ..types import ExtractLabelsFunction, Tokeniser
 from ..utils import (
-    attention_backend,
     clear_memory,
-    create_model_cache_dir,
     get_hf_token,
     get_min_cuda_compute_capability,
     internet_connection_available,
     resolve_model_path,
-    split_model_id,
 )
 from .hf import HuggingFaceEncoderModel, get_model_repo_info, load_hf_model_config
 
@@ -90,18 +90,23 @@ except ImportError:
     )
 
 if t.TYPE_CHECKING or importlib.util.find_spec("vllm") is not None:
-    from vllm import LLM, SamplingParams  # type: ignore[missing-import]
-    from vllm.distributed.parallel_state import (  # type: ignore[missing-import]
+    import vllm.config
+
+    # MacOS/CPU installs an older version of vLLM, which doesn't have the attention
+    # config
+    if hasattr(vllm.config, "attention"):
+        from vllm.config.attention import AttentionConfig
+
+    from vllm import LLM, SamplingParams
+    from vllm.distributed.parallel_state import (
         destroy_distributed_environment,
         destroy_model_parallel,
     )
-    from vllm.lora.request import LoRARequest  # type: ignore[missing-import]
-    from vllm.sampling_params import (  #  type: ignore[missing-import]
-        StructuredOutputsParams,
-    )
+    from vllm.lora.request import LoRARequest
+    from vllm.sampling_params import StructuredOutputsParams
 
 if t.TYPE_CHECKING or importlib.util.find_spec("ray") is not None:
-    import ray  # type: ignore[missing-import]
+    import ray
 
 
 if t.TYPE_CHECKING:
@@ -111,7 +116,9 @@ if t.TYPE_CHECKING:
     from ..data_models import BenchmarkConfig, DatasetConfig, Task
 
 
-MODELS_REQUIRING_CUSTOM_ATTENTION_BACKENDS: dict[re.Pattern, str] = {
+MODELS_REQUIRING_CUSTOM_ATTENTION_BACKENDS: dict[
+    re.Pattern, t.Literal[*ATTENTION_BACKENDS]  # pyrefly: ignore[invalid-literal]
+] = {
     re.compile(r".*gpt-oss.*", flags=re.IGNORECASE): "TRITON_ATTN",
     re.compile(r"google/gemma-3-1b.*", flags=re.IGNORECASE): "TRITON_ATTN",
     re.compile(r"google/gemma-3n.*", flags=re.IGNORECASE): "TRITON_ATTN",
@@ -149,11 +156,20 @@ class VLLMModel(HuggingFaceEncoderModel):
                 The benchmark configuration.
             log_metadata:
                 Whether to log the model and dataset metadata.
+
+        Raises:
+            NeedsSystemDependency:
+                If the CUDA Toolkit is not installed.
+            NeedsExtraInstalled:
+                If the generative extra is not installed.
+            InvalidBenchmark:
+                If no CUDA GPUs are available and the dataset requires structured
+                generation.
         """
         if importlib.util.find_spec("vllm") is None:
             raise NeedsExtraInstalled(extra="generative")
 
-        if shutil.which("nvcc") is None:
+        if torch.cuda.is_available() and shutil.which("nvcc") is None:
             raise NeedsSystemDependency(
                 dependency="nvcc",
                 instructions=(
@@ -163,23 +179,43 @@ class VLLMModel(HuggingFaceEncoderModel):
                 ),
             )
 
+        if not torch.cuda.is_available() and (
+            dataset_config.task.task_group
+            in [
+                TaskGroup.SEQUENCE_CLASSIFICATION,
+                TaskGroup.MULTIPLE_CHOICE_CLASSIFICATION,
+            ]
+            or dataset_config.task.uses_structured_output
+        ):
+            raise InvalidBenchmark(
+                "We currently require CUDA to benchmark generative models on tasks "
+                "that uses structured generation, which includes the current task "
+                f"{dataset_config.task.name}. This is due to an xgrammar issue, which "
+                "will hopefully be fixed soon."
+            )
+
         raise_if_wrong_params(
             model_config=model_config, allowed_params=self.allowed_params
         )
 
-        # See if the model requires a particular attention backend
-        default_flash_attention_backend = None
-        for pattern, backend in MODELS_REQUIRING_CUSTOM_ATTENTION_BACKENDS.items():
-            if re.search(pattern=pattern, string=model_config.model_id):
-                default_flash_attention_backend = backend
-                break
+        # Determine the attention backend to use:
+        # Override for models that require a specific backend, otherwise use user's
+        # choice from CLI (defaults to FLASHINFER)
+        if hasattr(vllm.config, "attention"):
+            for pattern, backend in MODELS_REQUIRING_CUSTOM_ATTENTION_BACKENDS.items():
+                if re.search(pattern=pattern, string=model_config.model_id):
+                    attention_backend = backend
+                    break
+            else:
+                attention_backend = benchmark_config.attention_backend
+        else:
+            attention_backend = benchmark_config.attention_backend
 
-        with (
-            no_terminal_output(disable=benchmark_config.verbose),
-            attention_backend(value=default_flash_attention_backend),
-        ):
+        with no_terminal_output(disable=benchmark_config.verbose):
             model, tokeniser = load_model_and_tokeniser(
-                model_config=model_config, benchmark_config=benchmark_config
+                model_config=model_config,
+                benchmark_config=benchmark_config,
+                attention_backend=attention_backend,
             )
         self._model: "LLM" = model
         self._tokeniser: Tokeniser = tokeniser
@@ -216,11 +252,14 @@ class VLLMModel(HuggingFaceEncoderModel):
             )
         )
         if self.model_config.adapter_base_model_id is not None:
-            adapter_path = snapshot_download(
-                repo_id=self.model_config.model_id,
-                revision=self.model_config.revision,
-                cache_dir=Path(self.model_config.model_cache_dir),
-            )
+            if Path(self.model_config.model_id).exists():
+                adapter_path = self.model_config.model_id
+            else:
+                adapter_path = snapshot_download(
+                    repo_id=self.model_config.model_id,
+                    revision=self.model_config.revision,
+                    cache_dir=Path(self.model_config.model_cache_dir),
+                )
             self.buffer["lora_request"] = LoRARequest(
                 lora_name="adapter", lora_int_id=1, lora_path=adapter_path
             )
@@ -543,7 +582,7 @@ class VLLMModel(HuggingFaceEncoderModel):
             else None,
             temperature=generation_kwargs["temperature"],
             top_p=generation_kwargs["top_p"],
-            top_k=generation_kwargs["top_k"],
+            top_k=int(generation_kwargs["top_k"]),
             repetition_penalty=generation_kwargs["repetition_penalty"],
             stop=[stop_token for stop_token in stop_tokens if stop_token],
             structured_outputs=structured_outputs,
@@ -552,10 +591,12 @@ class VLLMModel(HuggingFaceEncoderModel):
         # If any of the prompts are empty then we need to replace them with a BOS token
         # so that the vLLM model can generate from them
         prompts: c.Sequence[str] = inputs["text"]
-        if any(len(prompt) == 0 for prompt in prompts):
+        if any(len(prompt.strip()) == 0 for prompt in prompts):
             log("Found empty prompts, replacing with BOS token.", level=logging.DEBUG)
             prompts = [
-                prompt if len(prompt) > 0 else str(self._tokeniser.bos_token)
+                prompt
+                if len(prompt.strip()) > 0
+                else str(self._tokeniser.bos_token or "x")
                 for prompt in prompts
             ]
 
@@ -579,24 +620,72 @@ class VLLMModel(HuggingFaceEncoderModel):
         max_tokens_per_prompt -= min(
             self.dataset_config.max_generated_tokens, max_tokens_per_prompt - 1
         )
-        log_once(
-            f"Truncating prompts for the model {self.model_config.model_id!r} "
-            f"to a maximum of {max_tokens_per_prompt:,} tokens.",
-            level=logging.DEBUG,
-        )
         tokenized_prompts = self._tokeniser(
-            text=prompts, truncation=True, max_length=max_tokens_per_prompt
+            text=prompts, max_length=max_tokens_per_prompt
         )
         if any(
-            len(input_ids) > max_tokens_per_prompt
+            len(input_ids) >= max_tokens_per_prompt
             for input_ids in tokenized_prompts.input_ids
         ):
-            raise InvalidBenchmark(
-                "Truncation of prompts failed, some prompts are still too long."
+            log(
+                f"Truncating prompts for the model {self.model_config.model_id!r} "
+                f"to a maximum of {max_tokens_per_prompt:,} tokens.",
+                level=logging.DEBUG,
             )
-        prompts = self._tokeniser.batch_decode(
-            sequences=tokenized_prompts.input_ids, skip_special_tokens=True
-        )
+            match self.generative_type:
+                case GenerativeType.BASE:
+                    truncated_tokenized_prompts = self._tokeniser(
+                        text=prompts, max_length=max_tokens_per_prompt, truncation=True
+                    )
+                    prompts = self._tokeniser.batch_decode(
+                        sequences=truncated_tokenized_prompts.input_ids,
+                        skip_special_tokens=True,
+                    )
+                case GenerativeType.INSTRUCTION_TUNED | GenerativeType.REASONING:
+                    assert self.end_of_chat_token_ids is not None, (
+                        "The end-of-chat token IDs should be set for instruction-tuned "
+                        "and reasoning models."
+                    )
+                    end_of_chat_token = self._tokeniser.decode(
+                        list(self.end_of_chat_token_ids)
+                    )
+                    prompt_segments: list[list[str]] = [
+                        prompt.replace(self._tokeniser.bos_token, "").split(
+                            end_of_chat_token
+                        )
+                        for prompt in prompts
+                    ]
+                    for num_few_shots_to_remove in range(
+                        1, self.dataset_config.num_few_shot_examples + 1
+                    ):
+                        new_prompts = [
+                            end_of_chat_token.join(
+                                prompt_segment[2 * num_few_shots_to_remove :]
+                            )
+                            for prompt_segment in prompt_segments
+                        ]
+                        tokenized_prompts = self._tokeniser(
+                            text=new_prompts, max_length=max_tokens_per_prompt
+                        )
+                        if all(
+                            len(input_ids) < max_tokens_per_prompt
+                            for input_ids in tokenized_prompts.input_ids
+                        ):
+                            prompts = new_prompts
+                            break
+                    else:
+                        raise InvalidBenchmark(
+                            "Truncation of prompts failed, some prompts are still too "
+                            "long."
+                        )
+                case _:
+                    raise InvalidBenchmark("The model type is not set!")
+        else:
+            log(
+                f"Truncation of prompts for model {self.model_config.model_id!r} is "
+                "not needed, so skipping truncation.",
+                level=logging.DEBUG,
+            )
 
         # Generate sequences using vLLM
         input_is_a_test = len(prompts) == 1 and len(set(prompts[0])) == 1
@@ -819,6 +908,10 @@ class VLLMModel(HuggingFaceEncoderModel):
 
         Returns:
             The model configuration.
+
+        Raises:
+            InvalidModel:
+                If the model does not exist.
         """
         model_id_components = split_model_id(model_id=model_id)
         model_info = get_model_repo_info(
@@ -893,7 +986,11 @@ class VLLMModel(HuggingFaceEncoderModel):
 
 
 def load_model_and_tokeniser(
-    model_config: "ModelConfig", benchmark_config: "BenchmarkConfig"
+    model_config: "ModelConfig",
+    benchmark_config: "BenchmarkConfig",
+    attention_backend: t.Literal[
+        *ATTENTION_BACKENDS  # pyrefly: ignore[invalid-literal]
+    ],
 ) -> tuple["LLM", Tokeniser]:
     """Load the model and tokeniser.
 
@@ -902,9 +999,18 @@ def load_model_and_tokeniser(
             The model configuration.
         benchmark_config:
             The benchmark configuration.
+        attention_backend:
+            The attention backend to use.
 
     Returns:
         A pair (model, tokeniser), with the loaded model and tokeniser
+
+    Raises:
+        NeedsExtraInstalled:
+            If a quantised model is being loaded and the required extra packages are not
+            installed.
+        InvalidModel:
+            If the model could not be loaded.
     """
     # Prefer base model ID if the model is an adapter - the adapter will be added on
     # during inference in this case
@@ -1018,9 +1124,14 @@ def load_model_and_tokeniser(
         model_config=model_config,
         token=get_hf_token(api_key=benchmark_config.api_key),
     )
-    vllm_tokenisation_params = get_vllm_tokenisation_params(
+    vllm_params = get_vllm_tokenisation_params(
         tokeniser=tokeniser, model_config=model_config
     )
+
+    # MacOS/CPU installs an older version of vLLM, which doesn't have the attention
+    # config
+    if hasattr(vllm.config, "attention"):
+        vllm_params["attention_config"] = AttentionConfig(backend=attention_backend)
 
     clear_vllm()
 
@@ -1034,11 +1145,16 @@ def load_model_and_tokeniser(
             if internet_connection_available() or Path(model_id).is_dir()
             else resolve_model_path(download_dir=download_dir)
         )
+
+        max_model_len = min(
+            true_max_model_len, MAX_CONTEXT_LENGTH + REASONING_MAX_TOKENS
+        )
         model = LLM(
             model=model_location,
             tokenizer=model_location,
             gpu_memory_utilization=benchmark_config.gpu_memory_utilization,
-            max_model_len=min(true_max_model_len, MAX_CONTEXT_LENGTH),
+            max_model_len=max_model_len,
+            max_num_batched_tokens=max_model_len,
             download_dir=download_dir,
             trust_remote_code=benchmark_config.trust_remote_code,
             revision=revision,
@@ -1048,14 +1164,14 @@ def load_model_and_tokeniser(
             pipeline_parallel_size=pipeline_parallel_size,
             disable_custom_all_reduce=True,
             quantization=quantization,
-            dtype=dtype,
+            dtype=dtype,  # pyrefly: ignore[bad-argument-type]
             enforce_eager=True,
             # TEMP: Prefix caching isn't supported with sliding window in vLLM yet,
             # so we disable it for now
             enable_prefix_caching=False,
             enable_lora=model_config.adapter_base_model_id is not None,
             max_lora_rank=256,
-            **vllm_tokenisation_params,
+            **vllm_params,
         )
     except (RuntimeError, ValueError, OSError) as e:
         if "awaiting a review from the repo authors" in str(e):
@@ -1080,11 +1196,11 @@ def load_model_and_tokeniser(
                 (
                     "Since you're running in verbose mode, you might see a descriptive "
                     "error above already. Note however that if the error message urges "
-                    "you to set the environment variable `VLLM_ATTENTION_BACKEND` to "
-                    "'FLEX_ATTENTION', please try setting it to 'TRITON_ATTN' first, "
-                    "as that often solves the issue, whereas 'FLEX_ATTENTION' usually "
-                    "doesn't. If you don't see any descriptive error above, then you "
-                    "can try "
+                    "you to use the attention backend 'FLEX_ATTENTION', please try "
+                    "setting it to 'TRITON_ATTN' instead using the "
+                    "`--attention-backend` CLI argument, as that often solves the "
+                    "issue, whereas 'FLEX_ATTENTION' usually doesn't. If you don't "
+                    "see any descriptive error above, then you can try "
                 )
                 if benchmark_config.verbose
                 else "Try "
@@ -1134,6 +1250,10 @@ def load_tokeniser(
 
     Returns:
         The loaded tokeniser.
+
+    Raises:
+        InvalidModel:
+            If the tokeniser could not be loaded.
     """
     revision = revision if adapter_base_model_id is None else "main"
     config = AutoConfig.from_pretrained(
@@ -1459,6 +1579,9 @@ def select_backend_and_parallelism() -> tuple[str, int, int]:
         - tensor_parallel_size (int): Number of GPUs per node.
         - pipeline_parallel_size (int): Number of stages across nodes.
     """
+    if not torch.cuda.is_available():
+        return "mp", 1, 1
+
     if not ray.is_initialized():
         try:
             ray.init(address="auto", ignore_reinit_error=True)

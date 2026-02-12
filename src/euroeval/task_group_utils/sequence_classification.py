@@ -5,17 +5,14 @@ import logging
 import re
 import typing as t
 
-import Levenshtein
 import numpy as np
 
+from ..closest_match import get_closest_match
 from ..enums import TaskGroup
 from ..exceptions import InvalidBenchmark
+from ..string_utils import extract_multiple_choice_labels
 from ..types import Predictions
-from ..utils import (
-    extract_multiple_choice_labels,
-    log_once,
-    raise_if_model_output_contains_nan_values,
-)
+from ..utils import log_once, raise_if_model_output_contains_nan_values
 
 if t.TYPE_CHECKING:
     from datasets.arrow_dataset import Dataset
@@ -180,32 +177,39 @@ def extract_labels_from_generation(
         if (m := re.search(r"boxed\{(.*?)\}", predicted_label)) is not None:
             predicted_label = m.group(1)
 
+        # If the prediction starts with one of the candidate labels (case-insensitive)
+        # then use that one
+        prefix_candidate_labels = [
+            candidate_label
+            for candidate_label in sample_candidate_labels[idx]
+            if predicted_label.lower().startswith(candidate_label.lower())
+        ]
+        if prefix_candidate_labels:
+            new_predicted_labels.append(prefix_candidate_labels[0])
+            continue
+
         # We set the word edit distance weights such that we heavily penalise insertions
         # and substitutions, so that we don't just insert the correct label, but that we
         # want the model to have included the correct label in its output.
-        insertion_weight = 1000
-        deletion_weight = 1
-        substitution_weight = 1000
 
         # Compute the word edit distances between the predicted label and all candidate
         # labels
-        edit_distances = [
-            Levenshtein.distance(
-                s1=predicted_label.lower(),
-                s2=candidate_label.lower(),
-                weights=(insertion_weight, deletion_weight, substitution_weight),
-            )
-            for candidate_label in sample_candidate_labels[idx]
-        ]
-
-        best_candidate_label = sample_candidate_labels[idx][
-            np.argmin(edit_distances).item()
-        ]
+        best_candidate_label, closest_distance = get_closest_match(
+            string=predicted_label.lower(),
+            options=[
+                candidate_label.lower()
+                for candidate_label in sample_candidate_labels[idx]
+            ],
+            case_sensitive=False,
+            insertion_weight=1000,
+            deletion_weight=1,
+            substitution_weight=1000,
+        )
 
         # If no candidate labels were found, we either pick the label with the smallest
         # word edit distance to the predicted label (if invalid model outputs are
         # allowed), or we raise an error
-        if min(edit_distances) >= 1000:
+        if closest_distance >= 1000:
             num_predictions_being_very_off += 1
 
         new_predicted_labels.append(best_candidate_label)
